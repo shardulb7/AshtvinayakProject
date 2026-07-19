@@ -1,0 +1,134 @@
+﻿@model IEnumerable<AshtavinayakAPP.Models.Notification>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<link href="~/CSS/Category/index.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery for AJAX -->
+
+<div class="d-flex justify-content-between align-items-center w-100">
+    <h2>Notification List</h2>
+    <div class="lefticons d-flex align-items-center">
+        <!-- Search Bar -->
+        <input type="text" id="searchInput" placeholder="Search..." style="padding: 5px; width: 200px; margin-right: 5px; display: none; border: none; margin-top:-17px;" onkeyup="filterTable()" />
+        <p>
+            <a href="javascript:void(0);" id="searchIcon" class="btn" style="padding: 5px 10px; margin-right: 5px; border: 1px solid grey; background-color: white; color: black;" title='Search'>
+                <i class="fas fa-search" style="color: black;"></i>
+            </a>
+        </p>
+        <p>
+            <a href="@Url.Action("Create")" class="btn btn-primary" style="padding: 5px 10px;" title='Add New'>
+                <i class="fas fa-plus"></i>
+            </a>
+        </p>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="table" id="notificationTable">
+        <thead>
+            <tr>
+                <th>Serial No</th>
+                <th>@Html.DisplayNameFor(model => model.NotificationMessage)</th>
+                <th>@Html.DisplayNameFor(model => model.NotificationDate)</th>
+                @* <th>@Html.DisplayNameFor(model => model.CreatedAt)</th>
+                <th>@Html.DisplayNameFor(model => model.UpdatedAt)</th> *@
+                <th>@Html.DisplayNameFor(model => model.Trip)</th>
+                <th>@Html.DisplayNameFor(model => model.Vehicle)</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int serialNumber = 1; // Initialize serial number counter
+            }
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@serialNumber</td>
+                    <td>@Html.DisplayFor(modelItem => item.NotificationMessage)</td>
+                    @* <td>@Html.DisplayFor(modelItem => item.NotificationDate)</td>
+                    <td>@Html.DisplayFor(modelItem => item.CreatedAt)</td>
+                    <td>@Html.DisplayFor(modelItem => item.UpdatedAt)</td> *@
+                    <td>@item.NotificationDate.ToString("yyyy-MM-dd")</td>
+                   @*  <td>@item.CreatedAt?.ToString("yyyy-MM-dd")</td>
+                    <td>@item.UpdatedAt?.ToString("yyyy-MM-dd")</td> *@
+                    <td>@Html.DisplayFor(modelItem => item.Trip.TourName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Vehicle.VehicleNumber)</td>
+                    <td>
+                        <a href='@Url.Action("Edit", new { id = item.NotificationId })'>
+                            <img src='~/images/edit (1).png' alt='Edit' style='width: 25px; height: 25px;' />
+                        </a>
+                        <a href='@Url.Action("Details", new { id = item.NotificationId })'>
+                            <img src='~/images/investigation_1723432.png' alt='Details' style='width: 25px; height: 25px;' />
+                        </a>
+                       
+                    </td>
+                </tr>
+                {
+                    serialNumber++; // Increment serial number
+                }
+            }
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        @if (ViewData["CurrentPage"] != null && (int)ViewData["CurrentPage"] > 1)
+        {
+            <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] - 1 })">Previous</a>
+        }
+
+        @for (int i = 1; i <= (int)ViewData["TotalPages"]; i++)
+        {
+            <a href="@Url.Action("Index", new { page = i })" class="@(i == (int)ViewData["CurrentPage"] ? "active" : "")">@i</a>
+        }
+
+        @if (ViewData["CurrentPage"] != null && (int)ViewData["CurrentPage"] < (int)ViewData["TotalPages"])
+        {
+            <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] + 1 })">Next</a>
+        }
+    </div>
+
+
+</div>
+
+<script>
+    // Function to toggle search bar visibility
+    document.getElementById('searchIcon').onclick = function () {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.style.display = searchInput.style.display === 'none' ? 'block' : 'none';
+        if (searchInput.style.display === 'block') {
+            searchInput.focus(); // Focus on search input when opened
+        }
+    };
+
+    // Function to filter the table based on search input
+    function filterTable() {
+        const input = document.getElementById('searchInput').value.toLowerCase(); // Get search input and convert to lowercase
+        const table = document.querySelector('.table'); // Reference the table
+        const rows = table.getElementsByTagName('tr');  // Get all rows of the table
+
+        for (let i = 1; i < rows.length; i++) { // Start at 1 to skip the header row
+            const messageCell = rows[i].getElementsByTagName('td')[1]; // Notification Message column
+            const dateCell = rows[i].getElementsByTagName('td')[2]; // Notification Date column
+            const tripCell = rows[i].getElementsByTagName('td')[5]; // Trip column
+
+            // Get the text content from each cell and convert it to lowercase
+            const messageText = messageCell ? messageCell.innerText.toLowerCase() : '';
+            const dateText = dateCell ? dateCell.innerText.toLowerCase() : '';
+            const tripText = tripCell ? tripCell.innerText.toLowerCase() : '';
+
+            // Check if the input matches any of the columns (Message, Date, Trip)
+            if (
+                messageText.includes(input) ||
+                dateText.includes(input) ||
+                tripText.includes(input)
+            ) {
+                rows[i].style.display = ''; // Show the row if a match is found
+            } else {
+                rows[i].style.display = 'none'; // Hide the row if no match
+            }
+        }
+    }
+</script>

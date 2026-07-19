@@ -1,0 +1,62 @@
+﻿@model AshtavinayakAPP.Models.Category
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<link href="~/CSS/category/details.css" rel="stylesheet" />
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Category Details</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+
+        <hr />
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h4 class="card-title">Category Information</h4>
+                <hr />
+
+                <dl class="row">
+                    <div class="col-md-12">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.CategoryName)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.CategoryName)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.City)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.City.CityName)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <p class="mt-3 text-center">
+            <a asp-action="Edit" asp-route-id="@Model?.CategoryId" class="btn btn-primaryN">Edit</a>
+            <a asp-action="Index" class="btn btn-secondaryN">Back to List</a>
+        </p>
+
+    </div>
+</div>

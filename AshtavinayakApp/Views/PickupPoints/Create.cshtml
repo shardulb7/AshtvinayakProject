@@ -1,0 +1,141 @@
+﻿@model AshtavinayakAPP.Models.PickupPoint
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<link href="~/css/category/create.css" rel="stylesheet" />
+<!-- Include SweetAlert CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Create Pickup Point</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+        <hr />
+
+        <form id="pickupPointForm" asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="CityId" class="control-label">City Name</label><span style="color: red;">*</span>
+                <select asp-for="CityId" class="form-control" asp-items="ViewBag.CityId" id="CityId" required>
+                    <option value="" disabled selected>Select City</option>
+                </select>
+                <span asp-validation-for="CityId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PackageId" class="control-label">Package Name</label><span style="color: red;">*</span>
+                <select asp-for="PackageId" class="form-control" asp-items="ViewBag.PackageId">
+                    <option value="" disabled selected>Select Package</option>
+                </select>
+                <span asp-validation-for="PackageId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PickupPoint1" class="control-label">Pickup Point</label><span style="color: red;">*</span>
+                <input asp-for="PickupPoint1" class="form-control" required placeholder="Enter Pickup Point" />
+                <span asp-validation-for="PickupPoint1" class="text-danger"></span>
+            </div>
+
+           @*  <div class="form-group">
+                <label asp-for="Time" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="Time" class="form-control" required placeholder="Enter Time" />
+                <span asp-validation-for="Time" class="text-danger"></span>
+            </div> *@
+
+            <div class="form-group">
+                <label asp-for="Time" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="Time" type="time" class="form-control" required placeholder="Enter Time" />
+                <span asp-validation-for="Time" class="text-danger"></span>
+            </div>
+
+
+           
+
+            <div class="form-group text-center">
+                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue">Create</button>
+                <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;">Cancel</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#CityId').change(function () {
+            var cityId = $(this).val();
+            if (cityId) {
+                $.ajax({
+                    url: '@Url.Action("GetPackagesByCity", "TripRoutes")',
+                    type: 'GET',
+                    data: { cityId: cityId },
+                    success: function (data) {
+                        var packageDropdown = $('#PackageId');
+                        packageDropdown.empty();
+                        packageDropdown.append('<option value="" disabled selected>Select Package</option>');
+                        $.each(data, function (index, package) {
+                            packageDropdown.append($('<option></option>').val(package.packageId).text(package.packageName));
+                        });
+                    },
+                    error: function () {
+                        alert('Failed to load packages. Please try again.');
+                    }
+                });
+            }
+        });
+    });
+   
+    // SweetAlert for Submit Button
+    document.getElementById('submitButton').addEventListener('click', function (e) {
+        e.preventDefault(); // Prevent the default button behavior
+
+        // Check if form is valid before submitting
+        var form = document.getElementById('pickupPointForm');
+        if (form.checkValidity()) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to create this pickup point?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, Create it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); // Submit the form if confirmed
+                }
+            });
+        } else {
+            // If form is not valid, trigger HTML5 validation
+            form.reportValidity(); // This will display the default validation messages
+        }
+    });
+
+    // SweetAlert for Cancel Button
+    document.getElementById('cancelButton').addEventListener('click', function (e) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Your changes will be lost!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Cancel!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '@Url.Action("Index", "PickupPoints")'; // Redirect if confirmed
+            }
+        });
+    });
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

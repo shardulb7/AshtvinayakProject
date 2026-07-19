@@ -1,0 +1,70 @@
+﻿@model AshtavinayakAPP.Models.Seat
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<link href="~/CSS/Category/edit.css" rel="stylesheet" />
+
+<div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+    <h4>Edit Seat</h4>
+    <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+</div>
+<hr />
+
+<form asp-action="Edit">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="SeatId" />
+
+    <div class="form-horizontal">
+        <div class="form-group">
+            <label asp-for="PackageId" class="control-label col-md-2">Package<span style="color:red;">*</span></label>
+            <div class="col-md-10">
+                <select asp-for="PackageId" class="form-control" asp-items="ViewBag.PackageId"></select>
+                <span asp-validation-for="PackageId" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="TripId" class="control-label"></label>
+            <select asp-for="TripId" class="form-control" asp-items="ViewBag.TripId"></select>
+        </div>
+        <div class="form-group">
+            <label asp-for="SeatNumber" class="control-label col-md-2">Seat Number<span style="color:red;">*</span></label>
+            <div class="col-md-10">
+                <input asp-for="SeatNumber" class="form-control" />
+                <span asp-validation-for="SeatNumber" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10 form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="IsAvailable" /> @Html.DisplayNameFor(model => model.IsAvailable)
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10 text-center">
+                <input type="submit" value="Save" class="btn btn-secondaryN" style="background-color:dodgerblue" />
+                <button type="button" id="cancelButton" class="btn btn-secondaryN">Cancel</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // Event listener for Cancel button
+        document.getElementById('cancelButton').addEventListener('click', function (e) {
+            e.preventDefault(); // Prevent the default reset action
+
+            // Redirect to Index page
+            window.location.href = '@Url.Action("Index", "Seats")';
+        });
+    </script>
+}

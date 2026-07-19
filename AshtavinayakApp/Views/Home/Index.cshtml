@@ -1,0 +1,349 @@
+﻿@model AshtavinayakAPP.Models.Dashdata
+
+@{
+    var dashData = Model; 
+    var recentPackages = ViewBag.RecentPackages as List<AshtavinayakAPP.Models.Package>;
+    var recentBookings = ViewBag.RecentBookings as List<AshtavinayakAPP.Models.Booking>;
+    var recentTrips = ViewBag.RecentTrips as List<AshtavinayakAPP.Models.Trip>;
+
+    ViewData["Title"] = "Home Page";
+}
+<link href="~/css/home/index.css" rel="stylesheet" />
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12">
+<div class="text-center">
+    <!-- Card Slider Container -->
+    <div class="card-slider-container">
+        <!-- Card Slider -->
+        <div class="card-slider">
+            <div class="card cardmarquee">
+                <img src="~/images/mayureshwar.jpg" alt="Card 1" />
+                <div class="card-content">
+                    <h5>Mayureshwar</h5>
+                </div>
+            </div>
+            <div class="card cardmarquee">
+                <img src="~/images/siddhatek.jpg" alt="Card 2" />
+                <div class="card-content">
+                    <h5>Siddhivinayak</h5>
+                </div>
+            </div>
+            <div class="card cardmarquee">
+                <img src="~/images/balleshwar.jpg" alt="Card 3" />
+                <div class="card-content">
+                    <h5>Balleshwar</h5>
+                </div>
+            </div>
+            <div class="card cardmarquee">
+                <img src="~/images/vinyak.jpg" alt="Card 4" />
+                <div class="card-content">
+                    <h5>Vardavinayak</h5>
+                </div>
+            </div>
+            <div class="card cardmarquee">
+                <img src="~/images/chintamani.jpg" alt="Card 5" />
+                <div class="card-content">
+                    <h5>Chintamani</h5>
+                </div>
+            </div>
+            <div class="card cardmarquee">
+                <img src="~/images/giri.jpg" alt="Card 6" />
+                <div class="card-content">
+                    <h5>Girijatmaj</h5>
+                </div>
+            </div>
+            <div class="card cardmarquee">
+                <img src="~/images/vhignhahar.jpg" alt="Card 7" />
+                <div class="card-content">
+                    <h5>Vighneshwar</h5>
+                </div>
+            </div>
+            <div class="card cardmarquee">
+                <img src="~/images/r.jpg" alt="Card 8" />
+                <div class="card-content">
+                    <h5>Mahaganpati</h5>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+</div>
+    </div>
+
+
+
+
+
+
+<div class="row mt-5 cardrow">
+
+    <!-- Column 1 -->
+    <div class="col-lg-6 col-md-12 col-sm-12 datacards">
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 mb-2 mt-4">
+                <h3>Total Counts</h3>
+            </div>
+            <!-- Card 1 -->
+            <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+
+                <div class="card">
+                    <div class="card-body text-center countingcard">
+                        <div class="image-container">
+                            <img src="~/images/booking(1).png" alt="Total Bookings" class="img-fluid">
+                        </div>
+                        <div class="card-right ms-3">
+                            <h5 class="card-title">Total Bookings</h5>
+                            <p class="card-text">@Model.TotalBooking</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 2 -->
+            <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                <div class="card">
+                    <div class="card-body text-center countingcard">
+                        <div class="image-container">
+                            <img src="~/images/travel.png" alt="Total Bookings" class="img-fluid">
+                        </div>
+                        <div class="card-right ms-3">
+                            <h5 class="card-title">Total Trips</h5>
+                            <p class="card-text">@Model.TotalTrips</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 3 -->
+            <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                <div class="card">
+                    <div class="card-body text-center countingcard">
+                        <div class="image-container">
+                            <img src="~/images/packages.png" alt="Total Bookings" class="img-fluid">
+                        </div>
+                        <div class="card-right ms-3">
+                            <h5 class="card-title">Total Packages</h5>
+                            <p class="card-text">@Model.TotalPackages</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 4 -->
+            <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                <div class="card">
+                    <div class="card-body text-center countingcard">
+                        <div class="image-container">
+                            <img src="~/images/transaction.jpg" alt="Total Bookings" class="img-fluid">
+                        </div>
+                        <div class="card-right ms-3">
+                            <h5 class="card-title">Total Transactions</h5>
+                            <p class="card-text">@Model.TotalTransactions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 2 -->
+   @*  <div class="col-lg-6 col-md-12 col-sm-12 datacards d-flex flex-column flex-md-row align-items-center justify-content-start">
+        <div class="row mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Popular Packages</h3>
+                <a href="@Url.Action("Index", "Packages")" class="btn" style="background-color: #D44206; color: white;">View Details</a>
+            </div>
+            @foreach (var package in recentPackages)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-lg h-100">
+                        <div class="card-body">
+                            <!-- Styled Card Title to look like a Footer -->
+                            <h5 class="card-title text-white p-3" style="background-color: #dcdedc; border-radius: 5px;">
+                                @package.PackageName
+                            </h5>
+                            <p class="card-text">Duration: @package.Duration</p>
+                            <p class="card-text">Price: @package.Price</p>
+
+                            <!-- Check if City is null, and if so, display "Not Available" -->
+                            <p class="card-text">City: @(package.City?.CityName ?? "Not Available")</p>
+
+                            <!-- Check if Category is null, and if so, display "Not Available" -->
+                            <p class="card-text">Category: @(package.Category?.CategoryName ?? "Not Available")</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+
+    </div> *@
+
+        <div class="col-lg-6 col-md-12 col-sm-12 datacards d-flex flex-column flex-md-row align-items-center justify-content-start">
+            <div class="row mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3>Popular Packages</h3>
+                    <a href="@Url.Action("Index", "Packages")" class="btn" style="background-color: #D44206; color: white;">View Details</a>
+                </div>
+
+                @if (recentPackages != null && recentPackages.Any())
+                {
+                    @foreach (var package in recentPackages)
+                    {
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadow-lg h-100">
+                                <div class="card-body">
+                                    <!-- Styled Card Title to look like a Footer -->
+                                    <h5 class="card-title text-white p-3" style="background-color: #c9c9c9; border-radius: 5px;">
+                                        @package.PackageName
+                                    </h5>
+                                    <p class="card-text">Duration: @package.Duration</p>
+                                    @* <p class="card-text">Price: @package.Price</p> *@
+
+                                    <!-- Check if City is null, and if so, display "Not Available" -->
+                                    <p class="card-text">City: @(package.City?.CityName ?? "Not Available")</p>
+
+                                    <!-- Check if Category is null, and if so, display "Not Available" -->
+                                    <p class="card-text">Category: @(package.Category?.CategoryName ?? "Not Available")</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12 text-center">
+                        <p class="text-muted" style="font-size: 18px;">No packages available.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+
+
+</div>
+
+
+<div class="row gx-5 mt-3 cardtable">
+        <div class="col-lg-6 col-md-12 col-sm-12 p-3 mb-3  rounded">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Recent Bookings</h3>
+                <a href="@Url.Action("Index", "Bookings")" class="btn" style="background-color: #D44206; color: white;">View Details</a>
+            </div>
+
+            <div class="table-responsive rounded">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>User</th>
+                            <th>Trip</th>
+                            <th>Booking Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var booking in recentBookings)
+                        {
+                            <tr>
+                                <td>@booking.BookingId</td>
+                                <td>@(booking.User?.UserName ?? "Not Available")</td>
+                                <td>@(booking.Trip?.TripDate.ToString("yyyy-MM-dd") ?? "Not Available")</td>
+                                <td>@(booking.BookingDate?.ToString("yyyy-MM-dd") ?? "Not Available")</td>
+                                <td>@(booking.Status ?? "Not Available")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-lg-6 col-md-12 col-sm-12 p-3 mb-3 rounded">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Upcoming Trips</h3>
+                <a href="@Url.Action("Index", "Trips")" class="btn" style="background-color: #D44206; color: white;">View Details</a>
+            </div>
+
+            <div class="table-responsive rounded">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Package ID</th>
+                            <th>Date</th>
+                            <th>Total Seats</th>
+                            <th>Available Seats</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var trip in ViewBag.RecentTrips)
+                        {
+                            <tr>
+                                <td>@trip.PackageId</td>
+                                <td>@trip.TripDate.ToString("yyyy-MM-dd")</td>
+                                <td>@trip.TotalSeats</td>
+                                <td>@trip.AvailableSeats</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+<script>
+    let currentIndex = 0;
+    const cards = document.querySelectorAll('.cardmarquee');
+    const totalCards = cards.length;
+    const cardSlider = document.querySelector('.card-slider');
+    const cardWidth = 200; // Width of the card (no margin, cards touch each other)
+    const visibleCards = 1; // Number of cards visible at a time
+
+    // Update container width to accommodate all cards
+    cardSlider.style.width = `${cardWidth * totalCards}px`;
+
+    // Function to move the slider
+    function moveSlider(direction) {
+        currentIndex += direction * visibleCards;
+
+        // Adjust currentIndex for looping (infinite loop)
+        if (currentIndex < 0) {
+            currentIndex = totalCards - visibleCards; // Loop back to the last cards
+        } else if (currentIndex >= totalCards) {
+            currentIndex = 0; // Loop back to the first cards
+        }
+
+        // Move the slider by adjusting the transform property
+        cardSlider.style.transition = 'transform 0.5s ease-in-out'; // Ensure smooth transition
+        cardSlider.style.transform = `translateX(-${currentIndex * cardWidth}px)`;
+    }
+
+    // Automatically slide every 3 seconds
+    setInterval(() => {
+        moveSlider(1); // Automatically move to the next set of cards
+    }, 3000); // 3000ms = 3 seconds
+
+    // Reset the slider position for infinite loop effect
+    cardSlider.addEventListener('transitionend', () => {
+        if (currentIndex >= totalCards) {
+            currentIndex = 0; // Reset index after moving past the last card
+            cardSlider.style.transition = 'none'; // Disable transition for instant reset
+            cardSlider.style.transform = `translateX(0)`; // Reset the slider to the start
+            setTimeout(() => {
+                cardSlider.style.transition = 'transform 0.5s ease-in-out'; // Re-enable transition after reset
+            }, 50); // Delay for smooth transition reset
+        }
+    });
+</script>
+

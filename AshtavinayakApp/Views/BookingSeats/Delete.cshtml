@@ -1,0 +1,111 @@
+﻿@model AshtavinayakAPP.Models.BookingSeat
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<link href="~/css/category/delete.css" rel="stylesheet" />
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Delete BookingSeat</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+
+        <hr />
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h3 class="card-title">Are you sure you want to delete this?</h3>
+                <h4>BookingSeat</h4>
+                <hr />
+
+                <dl class="row">
+                    <div class="col-md-4">
+                        <dt>@Html.DisplayNameFor(model => model.SeatNumber)</dt>
+                    </div>
+                    <div class="col-md-8">
+                        <dd>@Html.DisplayFor(model => model.SeatNumber)</dd>
+                    </div>
+                    <div class="col-md-4">
+                        <dt>@Html.DisplayNameFor(model => model.Adults)</dt>
+                    </div>
+                    <div class="col-md-8">
+                        <dd>@Html.DisplayFor(model => model.Adults)</dd>
+                    </div>
+                    <div class="col-md-4">
+                        <dt>@Html.DisplayNameFor(model => model.Childwithseat)</dt>
+                    </div>
+                    <div class="col-md-8">
+                        <dd>@Html.DisplayFor(model => model.Childwithseat)</dd>
+                    </div>
+                    <div class="col-md-4">
+                        <dt>@Html.DisplayNameFor(model => model.Childwithoutseat)</dt>
+                    </div>
+                    <div class="col-md-8">
+                        <dd>@Html.DisplayFor(model => model.Childwithoutseat)</dd>
+                    </div>
+                    <div class="col-md-4">
+                        <dt>@Html.DisplayNameFor(model => model.BookingId)</dt>
+                    </div>
+                    <div class="col-md-8">
+                        <dd>@Html.DisplayFor(model => model.BookingId)</dd>
+                    </div>
+                    <div class="col-md-4">
+                        <dt>@Html.DisplayNameFor(model => model.Trip)</dt>
+                    </div>
+                    <div class="col-md-8">
+                        <dd>@Html.DisplayFor(model => model.Trip.TourName)</dd>
+                    </div>
+                    <div class="col-md-4">
+                        <dt>@Html.DisplayNameFor(model => model.User)</dt>
+                    </div>
+                    <div class="col-md-8">
+                        <dd>@Html.DisplayFor(model => model.User.UserName)</dd>
+                    </div>
+                </dl>
+
+                @using (Html.BeginForm("Delete", "BookingSeats", FormMethod.Post, new { id = "deleteForm" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(model => model.BookingSeatId)
+
+                    <div class="form-actions text-center">
+                        <input type="submit" value="Delete" class="btn-secondaryN" style="background-color: dodgerblue;" id="deleteButton" />
+                        <button type="button" id="cancelButton" style="background-color: red;" class="btn-secondaryN">Cancel</button>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Event listener for Delete button
+        document.getElementById('deleteButton').addEventListener('click', function (e) {
+            e.preventDefault(); // Prevent the form from being submitted immediately
+
+            // Show confirmation dialog
+            var userConfirmed = confirm("Are you sure you want to delete this booking seat?");
+
+            // If the user confirms, submit the form
+            if (userConfirmed) {
+                document.getElementById('deleteForm').submit();
+            } else {
+                window.location.href = '@Url.Action("Index", "BookingSeats")';
+            }
+        });
+
+        // Event listener for Cancel button
+        document.getElementById('cancelButton').addEventListener('click', function (e) {
+            e.preventDefault(); // Prevent the default action
+
+            // Redirect to index page or wherever necessary
+            window.location.href = '@Url.Action("Index", "BookingSeats")';
+        });
+    </script>
+}

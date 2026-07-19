@@ -1,0 +1,118 @@
+﻿@model AshtavinayakAPP.Models.Notification
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<link href="~/css/category/create.css" rel="stylesheet" />
+<!-- Include SweetAlert CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Create Notification</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+        <hr />
+
+        <form id="notificationForm" asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+           
+
+
+
+
+            <div class="form-group mb-2">
+                <label asp-for="TripId" class="control-label">Trip Id</label>
+                <select asp-for="TripId" class="form-control" asp-items="ViewBag.TripId" required>
+                    <option value="">Select Trip </option>
+                </select>
+                <span asp-validation-for="TripId" class="text-danger"></span>
+            </div>
+
+          
+
+
+
+
+
+
+            <!-- Notification Message Input -->
+            <div class="form-group">
+                <label asp-for="NotificationMessage" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="NotificationMessage" class="form-control" required placeholder="Enter Notification Message" />
+                <span asp-validation-for="NotificationMessage" class="text-danger"></span>
+            </div>
+
+            <!-- Notification Date Input -->
+            <div class="form-group">
+                <label asp-for="NotificationDate" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="NotificationDate" class="form-control" type="datetime-local" required />
+                <span asp-validation-for="NotificationDate" class="text-danger"></span>
+            </div>
+
+            <!-- Vehicle Dropdown -->
+          @*   <div class="form-group">
+                <label asp-for="VehicleId" class="control-label"></label>
+                <select asp-for="VehicleId" class="form-control" asp-items="ViewBag.VehicleId"></select>
+            </div> *@
+
+            <div class="form-group mb-2">
+                <label asp-for="VehicleId" class="control-label">Vehicle Id</label>
+                <select asp-for="VehicleId" class="form-control" asp-items="ViewBag.VehicleId" required>
+                    <option value="">Select VehicleId</option>
+                </select>
+                <span asp-validation-for="VehicleId" class="text-danger"></span>
+            </div>
+
+
+
+            <!-- Submit and Cancel Buttons -->
+            <div class="form-group text-center">
+                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue">Create</button>
+                <button type="button" id="cancelButton" class="btn btn-secondaryN">Cancel</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    // SweetAlert for Submit Button
+    document.getElementById('submitButton').addEventListener('click', function (e) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Do you want to add this notification?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Add it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('notificationForm').submit(); // Submit the form if confirmed
+            }
+        });
+    });
+
+    // SweetAlert for Cancel Button
+    document.getElementById('cancelButton').addEventListener('click', function (e) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Your changes will be lost!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Cancel!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '@Url.Action("Index", "Notifications")'; // Redirect if confirmed
+            }
+        });
+    });
+</script>
+

@@ -1,0 +1,135 @@
+﻿@model AshtavinayakAPP.Models.Vehicle
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<link href="~/CSS/Category/edit.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Edit Vehicle</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+        <hr />
+
+        <form id="vehicleForm" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="VehicleId" />
+
+            <div class="form-horizontal">
+                <div class="form-group">
+                    <label asp-for="VehicleType" class="control-label">Vehicle Type</label><span style="color: red;">*</span>
+                    <input asp-for="VehicleType" class="form-control" required />
+                    <span asp-validation-for="VehicleType" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="VehicleName" class="control-label">Vehicle Name</label><span style="color: red;">*</span>
+                    <input asp-for="VehicleName" class="form-control" required />
+                    <span asp-validation-for="VehicleName" class="text-danger"></span>
+                </div>
+
+                @*  <div class="form-group">
+                <label asp-for="VehicleNumber" class="control-label">Vehicle Number</label><span style="color: red;">*</span>
+                <input asp-for="VehicleNumber" class="form-control" required />
+                <span asp-validation-for="VehicleNumber" class="text-danger"></span>
+                </div> *@
+
+                <div class="form-group">
+                    <label asp-for="VehicleNumber" class="control-label"></label><span style="color: red;">*</span>
+                    <input asp-for="VehicleNumber" class="form-control" required placeholder="Enter Vehicle Number" />
+                    <span asp-validation-for="VehicleNumber" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="TotalSeats" class="control-label">Total Seats</label><span style="color: red;">*</span>
+                    <input asp-for="TotalSeats" class="form-control" required />
+                    <span asp-validation-for="TotalSeats" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="DriverName" class="control-label">Driver Name</label><span style="color: red;">*</span>
+                    <input asp-for="DriverName" class="form-control" required />
+                    <span asp-validation-for="DriverName" class="text-danger"></span>
+                </div>
+
+                @*  <div class="form-group">
+                <label asp-for="DriverContact" class="control-label">Driver Contact</label><span style="color: red;">*</span>
+                <input asp-for="DriverContact" class="form-control" required />
+                <span asp-validation-for="DriverContact" class="text-danger"></span>
+                </div> *@
+
+                <div class="form-group ">
+                    <label asp-for="DriverContact" class="control-label"></label><span style="color: red;">*</span>
+                    <input asp-for="DriverContact" class="form-control" required
+                           pattern="^\d{10}$" title="Please enter a valid 10-digit contact number." />
+                    <span asp-validation-for="DriverContact" class="text-danger"></span>
+                </div>
+
+
+                <div class="form-group">
+                    <label asp-for="TripId" class="control-label">Trip</label><span style="color: red;">*</span>
+                    <select asp-for="TripId" class="form-control" required asp-items="ViewBag.TripId"></select>
+                    <span asp-validation-for="TripId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group text-center">
+                    <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color: dodgerblue">Update</button>
+                    <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;">Cancel</button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    document.getElementById('submitButton').addEventListener('click', function (e) {
+        e.preventDefault();
+
+        var form = document.getElementById('vehicleForm');
+        if (form.checkValidity()) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to update this vehicle?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, Save it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        } else {
+            form.reportValidity(); // Triggers built-in validation messages
+        }
+    });
+
+    document.getElementById('cancelButton').addEventListener('click', function (e) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Your changes will be lost!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Cancel!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '@Url.Action("Index", "Vehicles")';
+            }
+        });
+    });
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

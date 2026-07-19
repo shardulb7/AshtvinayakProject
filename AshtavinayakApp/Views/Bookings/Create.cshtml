@@ -1,0 +1,119 @@
+﻿@model AshtavinayakAPP.Models.Booking
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<link href="~/css/category/create.css" rel="stylesheet" />
+<!-- Include SweetAlert CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Add Booking</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+        <hr />
+
+        <form id="bookingForm" asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="UserId" class="control-label"></label><span style="color: red;">*</span>
+                <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId" required>
+                    <option value="" disabled selected>Select User</option>
+                </select>
+                <span asp-validation-for="UserId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="TripId" class="control-label"></label><span style="color: red;">*</span>
+                <select asp-for="TripId" class="form-control" asp-items="ViewBag.TripId" required>
+                    <option value="" disabled selected>Select Trip</option>
+                </select>
+                <span asp-validation-for="TripId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="PickupPointId" class="control-label"></label><span style="color: red;">*</span>
+                <select asp-for="PickupPointId" class="form-control" asp-items="ViewBag.PickupPointId" required>
+                    <option value="" disabled selected>Select Pickup Point</option>
+                </select>
+                <span asp-validation-for="PickupPointId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Droppoint" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="Droppoint" class="form-control" required placeholder="Enter Droppoint" />
+                <span asp-validation-for="Droppoint" class="text-danger"></span>
+            </div>
+
+
+            <div class="form-group">
+                <label asp-for="TotalPayment" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="TotalPayment" class="form-control" required placeholder="Enter Total Payment" />
+                <span asp-validation-for="TotalPayment" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Advance" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="Advance" class="form-control" required placeholder="Enter Advance Payment" />
+                <span asp-validation-for="Advance" class="text-danger"></span>
+            </div>
+
+            <div class="form-group text-center">
+                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue">Create</button>
+                <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;">Cancel</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    // SweetAlert for Submit Button
+    document.getElementById('submitButton').addEventListener('click', function (e) {
+        e.preventDefault(); // Prevent the default button behavior
+
+        // Check if form is valid before submitting
+        var form = document.getElementById('bookingForm');
+        if (form.checkValidity()) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to add this booking?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, Add it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); // Submit the form if confirmed
+                }
+            });
+        } else {
+            // If form is not valid, trigger HTML5 validation
+            form.reportValidity(); // This will display the default validation messages
+        }
+    });
+
+    // SweetAlert for Cancel Button
+    document.getElementById('cancelButton').addEventListener('click', function (e) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Your changes will be lost!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Cancel!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '@Url.Action("Index", "Bookings")'; // Redirect if confirmed
+            }
+        });
+    });
+</script>

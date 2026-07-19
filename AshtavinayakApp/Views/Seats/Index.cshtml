@@ -1,0 +1,111 @@
+﻿@model IEnumerable<AshtavinayakAPP.Models.Seat>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<link href="~/CSS/Category/index.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery for AJAX -->
+
+<div class="d-flex justify-content-between align-items-center w-100">
+    <h2>Seat List</h2>
+    <div class="lefticons d-flex align-items-center">
+        <!-- Search Bar -->
+        <input type="text" id="searchInput" placeholder="Search..." style="padding: 5px; width: 200px; margin-right: 5px; display: none; border: none; margin-top:-17px;" onkeyup="filterTable()" />
+        <p>
+            <a href="javascript:void(0);" id="searchIcon" class="btn" style="padding: 5px 10px; margin-right: 5px; border: 1px solid grey; background-color: white; color: black;" title='Search'>
+                <i class="fas fa-search" style="color: black;"></i>
+            </a>
+        </p>
+        <p>
+            <a href="@Url.Action("Create")" class="btn btn-primary" style="padding: 5px 10px;" title='Add New'>
+                <i class="fas fa-plus"></i>
+            </a>
+        </p>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="table" id="seatTable">
+        <thead>
+            <tr>
+                <th>Serial No</th>
+                <th>@Html.DisplayNameFor(model => model.SeatNumber)</th>
+                <th>@Html.DisplayNameFor(model => model.IsAvailable)</th>
+                <th>@Html.DisplayNameFor(model => model.Package)</th>
+                <th>Trip</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int serialNumber = 1; // Initialize serial number counter
+            }
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@serialNumber</td>
+                    <td>@Html.DisplayFor(modelItem => item.SeatNumber)</td>
+                    <td>@Html.DisplayFor(modelItem => item.IsAvailable)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Package.PackageName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Trip.TourName)</td>
+
+                    <td>
+                        <a href='@Url.Action("Edit", new { id = item.SeatId })'>
+                            <img src='~/images/edit (1).png' alt='Edit' style='width: 25px; height: 25px;' />
+                        </a>
+                        <a href='@Url.Action("Details", new { id = item.SeatId })'>
+                            <img src='~/images/investigation_1723432.png' alt='Details' style='width: 25px; height: 25px;' />
+                        </a>
+                        <a href='@Url.Action("Delete", new { id = item.SeatId })'>
+                            <img src='~/images/delete (1).png' alt='Delete' style='width: 25px; height: 25px;' />
+                        </a>
+                    </td>
+                </tr>
+                {
+                    serialNumber++; // Increment serial number
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Function to toggle search bar visibility
+    document.getElementById('searchIcon').onclick = function () {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.style.display = searchInput.style.display === 'none' ? 'block' : 'none';
+        if (searchInput.style.display === 'block') {
+            searchInput.focus(); // Focus on search input when opened
+        }
+    };
+
+    // Function to filter the table based on search input
+    function filterTable() {
+        const input = document.getElementById('searchInput').value.toLowerCase(); // Get search input and convert to lowercase
+        const table = document.querySelector('.table'); // Reference the table
+        const rows = table.getElementsByTagName('tr');  // Get all rows of the table
+
+        for (let i = 1; i < rows.length; i++) { // Start at 1 to skip the header row
+            const seatNumberCell = rows[i].getElementsByTagName('td')[1]; // Seat Number column
+            const isAvailableCell = rows[i].getElementsByTagName('td')[2]; // Is Available column
+            const packageCell = rows[i].getElementsByTagName('td')[3]; // Package column
+
+            // Get the text content from each cell and convert it to lowercase
+            const seatNumberText = seatNumberCell ? seatNumberCell.innerText.toLowerCase() : '';
+            const isAvailableText = isAvailableCell ? isAvailableCell.innerText.toLowerCase() : '';
+            const packageText = packageCell ? packageCell.innerText.toLowerCase() : '';
+
+            // Check if the input matches any of the columns (Seat Number, Is Available, Package)
+            if (
+                seatNumberText.includes(input) ||
+                isAvailableText.includes(input) ||
+                packageText.includes(input)
+            ) {
+                rows[i].style.display = ''; // Show the row if a match is found
+            } else {
+                rows[i].style.display = 'none'; // Hide the row if no match
+            }
+        }
+    }
+</script>

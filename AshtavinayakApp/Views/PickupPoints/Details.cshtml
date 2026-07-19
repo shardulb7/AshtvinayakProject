@@ -1,0 +1,91 @@
+﻿@model AshtavinayakAPP.Models.PickupPoint
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<link href="~/CSS/Category/details.css" rel="stylesheet" />
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Details PickupPoint</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+
+        <hr />
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h4 class="card-title">Pickup Point Details</h4>
+
+                <dl class="row">
+                    <div class="col-md-12">
+                        <!-- Pickup Point Name -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>PickupPoint</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.PickupPoint1)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Time -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.Time)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.Time)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- City -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.City)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.City.CityName)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Package -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.Package)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.Package.PackageName)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </dl>
+
+                <p class="mt-3 text-center">
+                    <a asp-action="Edit" asp-route-id="@Model?.PickupPointId" class="btn btn-primaryN">Edit</a>
+                    <a asp-action="Index" class="btn btn-secondaryN">Back to List</a>
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,96 @@
+﻿@model AshtavinayakAPP.Models.Category
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<link href="~/css/category/create.css" rel="stylesheet" />
+<!-- Include SweetAlert CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Add Category</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+        <hr />
+
+        <form id="categoryForm" asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group mb-2">
+                <label asp-for="CategoryName" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="CategoryName" class="form-control" required placeholder="Enter Category Name" />
+                <span asp-validation-for="CategoryName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="CityId" class="control-label"></label><span style="color: red;">*</span>
+                <select asp-for="CityId" class="form-control" asp-items="ViewBag.CityId" required>
+                    <option value="" disabled selected>Select City</option>
+                </select>
+                <span asp-validation-for="CityId" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="TourDestinationId" class="control-label"></label><span style="color: red;">*</span>
+                <select asp-for="TourDestinationId" class="form-control" asp-items="ViewBag.TourDestinationId" required>
+                    <option value="" disabled selected>Select TourDestination</option>
+                </select>
+                <span asp-validation-for="TourDestinationId" class="text-danger"></span>
+            </div>
+            <div class="form-group text-center">
+                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue">Create</button>
+                <button type="button" id="cancelButton" class="btn btn-secondaryN">Cancel</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $("#submitButton").click(function (e) {
+            e.preventDefault();
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to add this category?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, Add it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $("#categoryForm").submit();
+                }
+            });
+        });
+
+        $("#cancelButton").click(function (e) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Your changes will be lost!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, Cancel!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '@Url.Action("Index", "Categories")';
+                }
+            });
+        });
+    });
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

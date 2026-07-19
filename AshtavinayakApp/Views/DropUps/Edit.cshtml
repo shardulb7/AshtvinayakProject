@@ -1,0 +1,100 @@
+﻿@model AshtavinayakAPP.Models.DropUp
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<link href="~/CSS/Category/edit.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Edit DropUp</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+        <hr />
+
+        <form id="dropUpForm" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="DroppointId" />
+
+            <div class="form-horizontal">
+                <!-- DropPoint Field -->
+                <div class="form-group">
+                    <label asp-for="DropPoint" class="control-label">Drop Point<span style="color:red;">*</span></label>
+                    <input asp-for="DropPoint" class="form-control" required placeholder="Enter Drop Point" />
+                    <span asp-validation-for="DropPoint" class="text-danger"></span>
+                </div>
+
+                <!-- City Dropdown -->
+                <div class="form-group">
+                    <label asp-for="CityId" class="control-label">City<span style="color:red;">*</span></label>
+                    <select asp-for="CityId" class="form-control" asp-items="ViewBag.CityId" required>
+                        <option value="">-- Select City --</option>
+                    </select>
+                    <span asp-validation-for="CityId" class="text-danger"></span>
+                </div>
+
+                <!-- Submit and Cancel Buttons -->
+                <div class="form-group text-center">
+                    <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue">Update</button>
+                    <button type="button" id="cancelButton" class="btn btn-secondaryN">Cancel</button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    // SweetAlert for Submit Button
+    document.getElementById('submitButton').addEventListener('click', function (e) {
+        var form = document.getElementById('dropUpForm');
+
+        // Check if the form is valid
+        if (form.checkValidity()) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to update this drop point?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, Save it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); // Submit the form if confirmed
+                }
+            });
+        } else {
+            // Trigger the validation to show error messages
+            form.reportValidity();
+        }
+    });
+
+    // SweetAlert for Cancel Button
+    document.getElementById('cancelButton').addEventListener('click', function (e) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Your changes will be lost!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Cancel!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '@Url.Action("Index", "DropUps")'; // Redirect if confirmed
+            }
+        });
+    });
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,278 @@
+﻿@model IEnumerable<AshtavinayakAPP.Models.BookingSeatDto>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+@* <link href="~/CSS/Category/index.css" rel="stylesheet" /> *@
+
+<link href="~/CSS/bookingindex.css" rel="stylesheet" />
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery for AJAX -->
+
+<div class="booking-container d-flex justify-content-between align-items-center w-100">
+    <h2>Booking Seat List</h2>
+    <div class="lefticons d-flex align-items-center">
+        <!-- Trip Dropdown -->
+        <select id="tripFilter" class="form-control" style="width: 200px; margin-right: 5px;margin-top:-16px;">
+            <option value="">All Trips</option>
+            @foreach (var trip in Model.Select(b => b.TourName).Distinct())
+            {
+                <option value="@trip">@trip</option>
+            }
+        </select>
+
+        <!-- Search Bar -->
+        <input type="text" id="searchInput" placeholder="Search..." style="padding: 5px; width: 200px; margin-right: 5px; display: none; border: none; margin-top:-17px;" onkeyup="filterTable()" />
+        <p>
+            <a href="javascript:void(0);" id="searchIcon" class="btn" style="padding: 5px 10px; margin-right: 5px; border: 1px solid grey; background-color: white; color: black;" title='Search'>
+                <i class="fas fa-search" style="color: black;"></i>
+            </a>
+        </p>
+        <p>
+            <a href="@Url.Action("Create")" class="btn btn-primary" style="padding: 5px 10px;" title='Add New'>
+                <i class="fas fa-plus"></i>
+            </a>
+        </p>
+        <div class="export-container">
+            <p style="margin-left:5px;">
+                @*  <button class="btn btn-success" id="exportExcelButton" title="Export to Excel">
+                <i class="fas fa-file-excel"></i> Export to Excel
+            </button> *@
+                <button class="btn btn-success" id="exportExcelButton" title="Export to Excel">
+                    <i class="fas fa-file-excel"></i> Excel
+                </button>
+                <button class="btn btn-danger" id="exportPdfButton" title="Export to PDF">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+            </p>
+        </div>
+
+    </div>
+</div>
+
+
+
+<div class="table-container">
+    <table class="table" id="bookingSeatTable">
+        <thead>
+            <tr>
+                <th>Serial No</th>
+                <th>@Html.DisplayNameFor(model => model.TripDate)</th>
+                <th>@Html.DisplayNameFor(model => model.BookingId)</th>
+                <th>@Html.DisplayNameFor(model => model.TourName)</th>
+                <th>@Html.DisplayNameFor(model => model.UserName)</th>
+                <th>@Html.DisplayNameFor(model => model.SeatNumbers)</th>
+                <th>@Html.DisplayNameFor(model => model.Adults)</th>
+                <th>@Html.DisplayNameFor(model => model.ChildWithSeat)</th>
+                <th>@Html.DisplayNameFor(model => model.ChildWithoutSeat)</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int serialNumber = 1; // Initialize serial number counter
+            }
+            @foreach (var item in Model)
+            {
+                <tr data-trip="@item.TourName">
+                    <td>@serialNumber</td>
+                    <td>@item.TripDate.ToString("dd-MMM-yyyy")</td>
+                    <td>@item.BookingId</td>
+                    <td>@item.TourName</td>
+                    <td>@item.UserName</td>
+                    <td>@item.SeatNumbers</td>
+                    <td>@item.Adults</td>
+                    <td>@item.ChildWithSeat</td>
+                    <td>@item.ChildWithoutSeat</td>
+                    <td>
+                        <a href='@Url.Action("Edit", new { id = item.Id })'>
+                            <img src='~/images/edit (1).png' alt='Edit' style='width: 25px; height: 25px;' />
+                        </a>
+                        <a href='@Url.Action("Details", new { id = item.Id })'>
+                            <img src='~/images/investigation_1723432.png' alt='Details' style='width: 25px; height: 25px;' />
+                        </a>
+                        <a href='@Url.Action("Delete", new { id = item.Id })'>
+                            <img src='~/images/delete (1).png' alt='Delete' style='width: 25px; height: 25px;' />
+                        </a>
+                    </td>
+                </tr>
+
+                serialNumber++; // Increment serial number
+
+            }
+
+        </tbody>
+    </table>
+
+
+</div>
+
+<!-- Display total bookings -->
+<div class="col-lg-12 total-bookings mt-2">
+    <h5>Total Bookings: <span id="totalBookings">@serialNumber</span></h5>
+</div>
+
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.24/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+
+
+
+<script>
+
+
+    // Add event listener for the Export to Excel button
+    $('#exportExcelButton').click(function () {
+        var selectedTrip = $('#tripFilter').val(); // Get selected trip value
+
+        // Redirect to the ExportToExcel action, passing the selected trip as a parameter
+        window.location.href = '@Url.Action("ExportToExcel", "BookingSeats")?trip=' + selectedTrip;
+    });
+
+
+
+
+    document.getElementById('searchIcon').onclick = function () {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.style.display = searchInput.style.display === 'none' ? 'block' : 'none';
+        if (searchInput.style.display === 'block') {
+            searchInput.focus();
+        }
+    };
+
+
+    document.getElementById('exportPdfButton').onclick = function () {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Add title
+        doc.text('Booking Seat List', 14, 10);
+
+        // Get the table data (including all rows from all pages)
+        const rows = [];
+        const tableHeaders = ["Serial No", "Booking ID", "Trip", "User", "Seat Number", "Adults", "Child with Seat", "Child without Seat"];
+
+        // Loop through all rows (not just visible ones)
+        const allRows = document.querySelectorAll("#bookingSeatTable tbody tr");
+        const searchInput = document.getElementById('searchInput').value.toLowerCase();
+        const tripFilter = document.getElementById('tripFilter').value;
+
+        allRows.forEach((row, index) => {
+            const tripName = row.getAttribute('data-trip');
+            const textContent = row.innerText.toLowerCase();
+
+            const matchesSearch = textContent.includes(searchInput);
+            const matchesTrip = tripFilter === "" || tripName === tripFilter;
+
+            // Only include rows that match the filter
+            if (matchesSearch && matchesTrip) {
+                const rowData = [];
+                const cells = row.getElementsByTagName("td");
+
+                rowData.push(index + 1); // Serial No
+                rowData.push(cells[1].innerText); // Booking ID
+                rowData.push(cells[2].innerText); // Trip
+                rowData.push(cells[3].innerText); // User
+                rowData.push(cells[4].innerText); // Seat Number
+                rowData.push(cells[5].innerText); // Adults
+                rowData.push(cells[6].innerText); // Child with Seat
+                rowData.push(cells[7].innerText); // Child without Seat
+
+                rows.push(rowData); // Add the row data to the rows array
+            }
+        });
+
+        // Create the table in the PDF
+        doc.autoTable({
+            head: [tableHeaders],
+            body: rows,
+            startY: 20,
+            theme: 'grid',
+            headStyles: { fillColor: [22, 160, 133] },
+            styles: { fontSize: 10 },
+            columnStyles: { 0: { cellWidth: 20 } },
+        });
+
+        // Save the generated PDF
+        doc.save('BookingSeats.pdf');
+    };
+
+    document.getElementById('tripFilter').onchange = function () {
+        filterTable();
+    };
+
+    function filterTable() {
+        const searchInput = document.getElementById('searchInput').value.toLowerCase();
+        const tripFilter = document.getElementById('tripFilter').value;
+        const rows = document.querySelectorAll("#bookingSeatTable tbody tr");
+        let totalBookings = 0;
+
+        rows.forEach(row => {
+            const tripName = row.getAttribute('data-trip');
+            const textContent = row.innerText.toLowerCase();
+
+            // Get the SeatNumber column (assuming it's the 5th column, index 4)
+            const seatNumbers = row.cells[4].innerText.trim();
+            const seatCount = seatNumbers ? seatNumbers.split(',').length : 0; // Count the comma-separated seats
+
+            const matchesSearch = textContent.includes(searchInput);
+            const matchesTrip = tripFilter === "" || tripName === tripFilter;
+
+            // If it matches search and trip filter, display the row and add seat count
+            if (matchesSearch && matchesTrip) {
+                row.style.display = "";
+                totalBookings += seatCount; // Add the seat count to total bookings
+            } else {
+                row.style.display = "none";
+            }
+        });
+
+        document.getElementById('totalBookings').innerText = totalBookings;
+    }
+
+
+</script>
+
+<style>
+    .total-bookings {
+        background-color: lightgrey; /* Blue background for the section */
+        color: black;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Soft shadow */
+        width: 100%; /* Full width */
+        display: flex;
+        justify-content: flex-end; /* Align text to the right */
+        align-items: center; /* Vertically center the content */
+    }
+
+        .total-bookings h5 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .total-bookings #totalBookings {
+            background-color: #28a745; /* Green background for the count */
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: 700;
+            margin-left: 10px; /* Add some spacing between text and count */
+        }
+
+        /* Hover effect */
+        .total-bookings:hover {
+            background-color: lightgrey; /* Darker blue on hover */
+            cursor: pointer;
+            box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.15);
+        }
+</style>

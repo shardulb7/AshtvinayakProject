@@ -1,0 +1,158 @@
+﻿@model AshtavinayakAPP.Models.Booking
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<link href="~/CSS/category/details.css" rel="stylesheet" />
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Details Booking</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+
+        <hr />
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h4 class="card-title">Booking Details</h4>
+
+                <dl class="row">
+                    <div class="col-md-12">
+                        <!-- Booking Date -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.BookingDate)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.BookingDate)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                      @*   <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.Status)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.Status)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> *@
+
+                        <!-- Total Payment -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.TotalPayment)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.TotalPayment)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advance -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.Advance)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.Advance)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Booking Code -->
+                       @*  <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.BookingCode)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.BookingCode)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> *@
+
+                        <!-- Pickup Point -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.PickupPoint)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.PickupPoint)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.Droppoint)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.Droppoint)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Trip -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.Trip.TourName)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.Trip.TourName)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-2 col-md-4">
+                                        <dt>@Html.DisplayNameFor(model => model.User.UserName)</dt>
+                                    </div>
+                                    <div class="col-sm-10 col-md-8">
+                                        <dd>@Html.DisplayFor(model => model.User.UserName)</dd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </dl>
+
+                <p class="mt-3 text-center">
+                    <a asp-action="Edit" asp-route-id="@Model?.BookingId" class="btn btn-primaryN">Edit</a>
+                    <a asp-action="Index" class="btn btn-secondaryN">Back to List</a>
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,85 @@
+﻿@model AshtavinayakAPP.Models.City
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<link href="~/CSS/Category/edit.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Edit City</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+        <hr />
+
+        <form id="cityForm" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="CityId" />
+
+            <div class="form-horizontal">
+
+                <div class="form-group">
+                    <label asp-for="CityName" class="control-label">City Name</label>
+                    <input asp-for="CityName" class="form-control" required placeholder="Enter City Name" />
+                    <span asp-validation-for="CityName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group text-center">
+                    <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue">Update</button>
+                    <button type="button" id="cancelButton" class="btn btn-secondaryN">Cancel</button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    // Submit Button with SweetAlert Confirmation
+    $("#submitButton").click(function (e) {
+        e.preventDefault();
+
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Do you want to update this city?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Save it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $("#cityForm").submit();
+            }
+        });
+    });
+
+    // Cancel Button with SweetAlert Confirmation
+    $("#cancelButton").click(function (e) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Your changes will be lost!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Cancel!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '@Url.Action("Index", "Cities")';
+            }
+        });
+    });
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

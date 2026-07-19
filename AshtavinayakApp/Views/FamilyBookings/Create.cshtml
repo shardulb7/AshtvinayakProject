@@ -1,0 +1,102 @@
+﻿@model AshtavinayakAPP.Models.FamilyBooking
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<link href="~/css/familyBooking/create.css" rel="stylesheet" />
+<!-- SweetAlert CSS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Add Family Booking</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+
+        <hr />
+
+        <form id="familyBookingForm" asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group mb-2">
+                <label asp-for="CarType" class="control-label">Car Type</label><span style="color: red;">*</span>
+                <input asp-for="CarType" class="form-control" required placeholder="Enter Car Type" />
+                <span asp-validation-for="CarType" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Date" class="control-label">Date</label><span style="color: red;">*</span>
+                <input asp-for="Date" class="form-control" required placeholder="Enter Date" type="date"/>
+                <span asp-validation-for="Date" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Time" class="control-label">Time</label><span style="color: red;">*</span>
+                <input asp-for="Time" class="form-control" required placeholder="Enter Time" type="time"/>
+                <span asp-validation-for="Time" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="BookingId" class="control-label">Booking ID</label><span style="color: red;">*</span>
+                <input asp-for="BookingId" class="form-control" required placeholder="Enter Booking ID" />
+                <span asp-validation-for="BookingId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="UserId" class="control-label">User ID</label><span style="color: red;">*</span>
+                <input asp-for="UserId" class="form-control" required placeholder="Enter User ID" />
+                <span asp-validation-for="UserId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group text-center">
+                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue">Create</button>
+                <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // SweetAlert for Submit Button
+    document.getElementById('submitButton').addEventListener('click', function (e) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Do you want to add this family booking?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Add it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('familyBookingForm').submit(); // Submit the form if confirmed
+            }
+        });
+    });
+
+    // SweetAlert for Cancel Button
+    document.getElementById('cancelButton').addEventListener('click', function (e) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Your changes will be lost!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Cancel!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '@Url.Action("Index", "FamilyBookings")'; // Redirect if confirmed
+            }
+        });
+    });
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

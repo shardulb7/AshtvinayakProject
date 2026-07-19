@@ -1,0 +1,131 @@
+﻿@model IEnumerable<AshtavinayakAPP.Models.Vehicle>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<link href="~/CSS/Category/index.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery for AJAX -->
+
+<div class="d-flex justify-content-between align-items-center w-100">
+    <h2>Vehicle List</h2>
+    <div class="lefticons d-flex align-items-center">
+        <!-- Search Bar -->
+        <input type="text" id="searchInput" placeholder="Search..." style="padding: 5px; width: 200px; margin-right: 5px; display: none; border: none; margin-top:-17px;" onkeyup="filterTable()" />
+        <p>
+            <a href="javascript:void(0);" id="searchIcon" class="btn" style="padding: 5px 10px; margin-right: 5px; border: 1px solid grey; background-color: white; color: black;" title='Search'>
+                <i class="fas fa-search" style="color: black;"></i>
+            </a>
+        </p>
+        <p>
+            <a href="@Url.Action("Create")" class="btn btn-primary" style="padding: 5px 10px;" title='Add New'>
+                <i class="fas fa-plus"></i>
+            </a>
+        </p>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="table" id="vehicleTable">
+        <thead>
+            <tr>
+                <th>Serial No</th>
+                <th>@Html.DisplayNameFor(model => model.VehicleType)</th>
+                <th>@Html.DisplayNameFor(model => model.VehicleName)</th>
+                <th>@Html.DisplayNameFor(model => model.VehicleNumber)</th>
+                <th>@Html.DisplayNameFor(model => model.TotalSeats)</th>
+                <th>@Html.DisplayNameFor(model => model.DriverName)</th>
+                <th>@Html.DisplayNameFor(model => model.DriverContact)</th>
+                <th>Trip</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int serialNumber = 1; // Initialize serial number counter
+            }
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@serialNumber</td>
+                    <td>@Html.DisplayFor(modelItem => item.VehicleType)</td>
+                    <td>@Html.DisplayFor(modelItem => item.VehicleName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.VehicleNumber)</td>
+                    <td>@Html.DisplayFor(modelItem => item.TotalSeats)</td>
+                    <td>@Html.DisplayFor(modelItem => item.DriverName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.DriverContact)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Trip.TourName)</td>
+
+                    <td>
+                        <a href='@Url.Action("Edit", new { id = item.VehicleId })'>
+                            <img src='~/images/edit (1).png' alt='Edit' style='width: 25px; height: 25px;' />
+                        </a>
+                        <a href='@Url.Action("Details", new { id = item.VehicleId })'>
+                            <img src='~/images/investigation_1723432.png' alt='Details' style='width: 25px; height: 25px;' />
+                        </a>
+                        <a href='@Url.Action("Delete", new { id = item.VehicleId })'>
+                            <img src='~/images/delete (1).png' alt='Delete' style='width: 25px; height: 25px;' />
+                        </a>
+                    </td>
+                </tr>
+                {
+                    serialNumber++; // Increment serial number
+                }
+            }
+        </tbody>
+    </table>
+
+
+    <div class="pagination">
+        @if (ViewData["CurrentPage"] != null && (int)ViewData["CurrentPage"] > 1)
+        {
+            <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] - 1 })">Previous</a>
+        }
+
+        @for (int i = 1; i <= (int)ViewData["TotalPages"]; i++)
+        {
+            <a href="@Url.Action("Index", new { page = i })" class="@(i == (int)ViewData["CurrentPage"] ? "active" : "")">@i</a>
+        }
+
+        @if (ViewData["CurrentPage"] != null && (int)ViewData["CurrentPage"] < (int)ViewData["TotalPages"])
+        {
+            <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] + 1 })">Next</a>
+        }
+    </div>
+
+
+</div>
+
+<script>
+    // Function to toggle search bar visibility
+    document.getElementById('searchIcon').onclick = function () {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.style.display = searchInput.style.display === 'none' ? 'block' : 'none';
+        if (searchInput.style.display === 'block') {
+            searchInput.focus(); // Focus on search input when opened
+        }
+    };
+
+    // Function to filter the table based on search input
+    function filterTable() {
+        const input = document.getElementById('searchInput').value.toLowerCase(); // Get search input and convert to lowercase
+        const table = document.querySelector('.table'); // Reference the table
+        const rows = table.getElementsByTagName('tr');  // Get all rows of the table
+
+        for (let i = 1; i < rows.length; i++) { // Start at 1 to skip the header row
+            const cells = rows[i].getElementsByTagName('td'); // Get all columns of the row
+            let rowContainsSearchText = false; // Flag to check if the row contains the search term
+
+            for (let j = 0; j < cells.length; j++) {
+                const cellText = cells[j].innerText.toLowerCase(); // Get cell text and convert to lowercase
+                if (cellText.includes(input)) {
+                    rowContainsSearchText = true;
+                    break; // If a match is found, exit the loop early
+                }
+            }
+
+            // Show or hide row based on search result
+            rows[i].style.display = rowContainsSearchText ? '' : 'none';
+        }
+    }
+</script>

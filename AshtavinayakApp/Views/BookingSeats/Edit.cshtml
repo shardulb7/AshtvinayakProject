@@ -1,0 +1,143 @@
+﻿@model AshtavinayakAPP.Models.BookingSeat
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<link href="~/CSS/Category/edit.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Edit BookingSeat</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+        <hr />
+
+        <form id="bookingSeatForm" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="BookingSeatId" />
+
+            <div class="form-horizontal">
+                <div class="form-group">
+                    <label asp-for="SeatNumber" class="control-label">Seat Number</label><span style="color: red;">*</span>
+                    <input asp-for="SeatNumber" class="form-control" required />
+                    <span asp-validation-for="SeatNumber" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Adults" class="control-label">Adults</label><span style="color: red;">*</span>
+                    <input asp-for="Adults" class="form-control" required type="number" />
+                    <span asp-validation-for="Adults" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Childwithseat" class="control-label">Child with Seat</label><span style="color: red;">*</span>
+                    <input asp-for="Childwithseat" class="form-control" required type="number" />
+                    <span asp-validation-for="Childwithseat" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Childwithoutseat" class="control-label">Child without Seat</label><span style="color: red;">*</span>
+                    <input asp-for="Childwithoutseat" class="form-control" required type="number" />
+                    <span asp-validation-for="Childwithoutseat" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="TripId" class="control-label">Trip</label><span style="color: red;">*</span>
+                    <select asp-for="TripId" class="form-control" asp-items="ViewBag.TripId" required>
+                        <option value="" disabled selected>Select Trip</option>
+                    </select>
+                    <span asp-validation-for="TripId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="UserId" class="control-label">User</label><span style="color: red;">*</span>
+                    <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId" required>
+                        <option value="" disabled selected>Select User</option>
+                    </select>
+                    <span asp-validation-for="UserId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="BookingId" class="control-label">Booking Id</label><span style="color: red;">*</span>
+                    <input asp-for="BookingId" class="form-control" required />
+                    <span asp-validation-for="BookingId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group text-center">
+                    <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color: dodgerblue">Update</button>
+                    <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;">Cancel</button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('input[type="number"]').forEach(function (input) {
+        input.addEventListener('input', function (e) {
+            let value = e.target.value;
+
+            // Remove non-numeric characters (keeping digits only)
+            value = value.replace(/[^0-9]/g, '');
+
+            // Prevent negative values
+            if (parseInt(value) < 0) {
+                value = '';
+            }
+
+            // Update input field value
+            e.target.value = value;
+        });
+    });
+
+
+    document.getElementById('submitButton').addEventListener('click', function (e) {
+        e.preventDefault();
+
+        var form = document.getElementById('bookingSeatForm');
+        if (form.checkValidity()) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to update this booking seat?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, Save it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        } else {
+            form.reportValidity(); // Triggers built-in validation messages
+        }
+    });
+
+    document.getElementById('cancelButton').addEventListener('click', function (e) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Your changes will be lost!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Cancel!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '@Url.Action("Index", "BookingSeats")';
+            }
+        });
+    });
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

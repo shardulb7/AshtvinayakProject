@@ -1,0 +1,167 @@
+﻿/* Card Slider Container */
+/*.card-slider-container {
+    position: relative;
+    width: 80%;
+    margin: 0 auto;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}*/
+/* Card Slider Container */
+.card-slider-container {
+    position: relative;
+    width: 100%; /* Full width of the container */
+    max-width: 100%; /* Ensure no overflow from the container */
+    margin: 0 auto;
+    overflow: hidden; /* Prevent cards from overflowing */
+    display: flex;
+    justify-content: center;
+}
+
+/* Card Slider */
+.card-slider {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    width: 100%; /* Ensure the slider takes up the full width */
+    margin-left:400px!important;
+}
+
+/* Individual Cards */
+.cardmarquee {
+    flex: 0 0 auto; /* Prevent cards from growing or shrinking */
+    width: 250px; /* Set a fixed width for cards */
+    margin: 0 10px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    overflow: hidden;
+    height: 100%;
+}
+
+    .cardmarquee img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-bottom: 2px solid #eee;
+    }
+
+.card-content {
+    padding: 10px;
+}
+
+.cardmarquee h3 {
+    margin: 10px 0;
+    color: #333;
+}
+
+.cardmarquee p {
+    color: #555;
+}
+
+/* Buttons */
+.slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 24px;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+    .slider-btn.prev {
+        left: 10px;
+    }
+
+    .slider-btn.next {
+        right: 10px;
+    }
+
+    .slider-btn:hover {
+        background-color: rgba(0, 0, 0, 0.8);
+    }
+
+@keyframes slide {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-100%); /* Move the cards by 100% */
+    }
+}
+
+.image-container {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px; /* Slightly rounded corners */
+    overflow: hidden; /* Ensures the image fits inside the container */
+    background-color: #f0f0f0; /* Background color */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+    .image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Ensures the image fills the square */
+    }
+
+.countingcard {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+/* Alternating row colors */
+table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Table responsiveness */
+.table-responsive {
+    overflow-x: auto;
+}
+@media (max-width: 1024px) {
+    /* For the main card row */
+    .cardrow {
+        flex-direction: column !important;
+    }
+
+    /* Ensure each column in the row stacks vertically */
+    .datacards {
+        width: 100% !important;
+        margin-bottom: 20px;
+    }
+
+    /* Responsive tables for Recent Bookings and Upcoming Trips */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    /* Adjust table font size and padding for better readability */
+    .table th,
+    .table td {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    /* Adjust card image size for better fit */
+    .countingcard .image-container img {
+        max-width: 100px;
+        height: auto;
+    }
+}
+
+.table-responsive {
+    border: 1px solid #f2f2f2;
+}

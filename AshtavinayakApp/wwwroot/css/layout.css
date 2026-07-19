@@ -1,0 +1,307 @@
+﻿/* ==============================
+   FONT & GLOBAL SETTINGS
+============================== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    background-color: #f9f9f9;
+}
+
+h1 {
+    font-weight: 800;
+}
+
+li {
+    list-style: none;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ==============================
+   MAIN LAYOUT
+============================== */
+.main {
+    min-height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    background-color: #f9f9f9;
+    margin-top: 72px; /* Adjust to match navbar height */
+}
+
+/* For desktop: leave space for sidebar */
+@media (min-width: 1024px) {
+    .main {
+        margin-left: 264px;
+        transition: margin-left 0.35s ease-in-out;
+    }
+}
+
+/* ==============================
+   NAVBAR
+============================== */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #D44206;
+    border-bottom: 2px solid #D44206;
+    padding: 1.15rem 1.5rem;
+    z-index: 999;
+}
+
+.navbar-brand {
+    color: #fff;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+@media (min-width: 1024px) {
+    .navbar-brand {
+        margin-left: 260px;
+    }
+}
+
+.notification-link {
+    color: white;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+    .notification-link:hover {
+        color: #ffc107;
+    }
+
+.logout-link {
+    display: inline-block;
+    padding: 4px;
+    background-color: white;
+    border-radius: 8px;
+    border: 2px solid #ff6f00;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+    .logout-link i {
+        color: #ff6f00;
+        font-size: 18px;
+    }
+
+/* ==============================
+   SIDEBAR
+============================== */
+#sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    min-width: 264px;
+    max-width: 264px;
+    background: linear-gradient(to bottom, #D44206 15%, #fce6e6 15%);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transition: margin-left 0.35s ease-in-out;
+}
+
+    /* Collapsed sidebar */
+    #sidebar.collapsed {
+        margin-left: -264px;
+    }
+
+/* Overlay for mobile */
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+    .overlay.active {
+        display: block;
+    }
+
+/* ==============================
+   SIDEBAR HEADER
+============================== */
+.sidetop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #D44206;
+    padding-top: 25px;
+}
+
+.profile-section {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.profile-pic {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+}
+
+.profile-section h5 {
+    color: white;
+    margin-top: 10px;
+}
+
+/* ==============================
+   SIDEBAR NAV LINKS
+============================== */
+.sidebar-nav {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.sidebar-item {
+    position: relative;
+}
+
+a.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.9rem 1rem;
+    font-size: 1rem;
+    color: black;
+    transition: none;
+    border-radius: 8px;
+}
+
+.sidebar-link i {
+    min-width: 20px;
+}
+
+.sidebar-link:hover {
+    background-color: #D44206;
+    color: white;
+}
+
+/* ==============================
+   SIDEBAR SUBMENU (Hover Dropdown)
+============================== */
+.sidebar-item.has-submenu {
+    position: relative;
+}
+
+    .sidebar-item.has-submenu > .submenu {
+        display: none;
+        background: #fce6e6;
+        border-left: 3px solid #D44206;
+        padding-left: 8px;
+        margin-left: 15px;
+        border-radius: 5px;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .sidebar-item.has-submenu:hover > .submenu {
+        display: block;
+    }
+
+.submenu li a {
+    display: block;
+    padding: 6px 12px;
+    color: #333;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+    .submenu li a:hover {
+        background-color: #D44206;
+        color: #fff;
+    }
+
+.submenu-arrow {
+    margin-left: auto;
+    transition: transform 0.2s;
+}
+
+.sidebar-item.has-submenu:hover .submenu-arrow {
+    transform: rotate(90deg);
+}
+
+/* ==============================
+   TOGGLER (Mobile)
+============================== */
+.toggler-btn {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+    .toggler-btn i {
+        font-size: 1.75rem;
+        color: #fff;
+    }
+
+/* ==============================
+   ANIMATIONS
+============================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==============================
+   RESPONSIVE STYLES
+============================== */
+
+/* Tablet & Mobile */
+@media (max-width: 1023px) {
+    #sidebar {
+        margin-left: -264px;
+    }
+
+        #sidebar.collapsed {
+            margin-left: 0;
+        }
+
+    .main {
+        margin-left: 0;
+    }
+
+    .navbar-brand {
+        font-size: 16px;
+    }
+}
+
+/* Small screens */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 15px;
+    }
+
+    .toggler-btn {
+        display: inline-block;
+    }
+}
+
+/* Desktop only */
+@media (min-width: 1024px) {
+    .toggler-btn {
+        display: none;
+    }
+}

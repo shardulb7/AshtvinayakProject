@@ -1,0 +1,42 @@
+﻿
+
+/* Buttons */
+.btn-default {
+    margin-top: 15px;
+    background-color: dodgerblue;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    
+    transition: background-color 0.3s ease;
+}
+
+    .btn-default:hover {
+        background-color: dodgerblue;
+    }
+
+.btn-secondaryN {
+    margin-top: 15px;
+    background-color: red;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-secondaryN:hover {
+    background-color: orangered;
+}
+
+
+@media (max-width: 1024px) {
+    .shadow-lg {
+        width: 100% !important;
+    }
+}
+

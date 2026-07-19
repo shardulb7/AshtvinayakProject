@@ -1,0 +1,66 @@
+﻿@model AshtavinayakAPP.Models.User
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<link href="~/css/category/create.css" rel="stylesheet" />
+<!-- Include SweetAlert CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Include custom JavaScript file -->
+<script src="~/js/formValidation.js"></script>
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;"> 
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Edit User</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+        <hr />
+
+        <form id="userForm" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="UserId" />
+
+            <!-- Username Input -->
+            <div class="form-group">
+                <label asp-for="UserName" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="UserName" class="form-control" required placeholder="Enter Username" />
+                <span asp-validation-for="UserName" class="text-danger"></span>
+            </div>
+
+            <!-- Email Input -->
+            <div class="form-group">
+                <label asp-for="Email" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="Email" class="form-control" required placeholder="Enter Email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <!-- Phone Number Input -->
+            <div class="form-group">
+                <label asp-for="PhoneNumber" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="PhoneNumber" class="form-control" required placeholder="Enter Phone Number" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+
+
+            <!-- Role Input -->
+            <div class="form-group">
+                <label asp-for="Role" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="Role" class="form-control" required placeholder="Enter Role" />
+                <span asp-validation-for="Role" class="text-danger"></span>
+            </div>
+
+            <!-- Submit and Cancel Buttons -->
+            <div class="form-group text-center">
+                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue;">Update</button>
+                <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;">Cancel</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script src="~/js/usersedit.js"></script>
+    

@@ -1,0 +1,219 @@
+﻿@model IEnumerable<AshtavinayakAPP.Models.Booking>
+
+@{
+    ViewData["Title"] = "Booking Index";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+
+<link href="~/CSS/bookingindex.css" rel="stylesheet" />
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery for AJAX -->
+
+<div class="booking-container d-flex justify-content-between align-items-center w-100">
+    <h2>Booking List</h2>
+    <div class="lefticons d-flex align-items-center">
+        <select id="tripFilter" class="form-control" style="width: 200px; margin-right: 5px; margin-top:-16px;">
+            <option value="">All Trips</option>
+            @foreach (var trip in Model
+            .Where(b => b.Trip != null)
+            .Select(b => b.Trip.TourName)
+            .Distinct())
+            {
+                <option value="@trip">@trip</option>
+            }
+            <option value="car booking">Car Booking</option>
+        </select>
+
+        <!-- Search Bar -->
+        <input type="text" id="searchInput" placeholder="Search..." style="padding: 5px; width: 200px; margin-right: 5px; display: none; border: none; margin-top:-17px;" onkeyup="filterTable()" />
+        <p>
+            <a href="javascript:void(0);" id="searchIcon" class="btn" style="padding: 5px 10px; margin-right: 5px; border: 1px solid grey; background-color: white; color: black;" title='Search'>
+                <i class="fas fa-search" style="color: black;"></i>
+            </a>
+        </p>
+
+        <p>
+            <a href="@Url.Action("Create")" class="btn btn-primary" style="padding: 5px 10px;" title='Add New'>
+                <i class="fas fa-plus"></i>
+            </a>
+        </p>
+        <!-- Export Buttons -->
+        <div class="export-container">
+            <p style="margin-left:5px;">
+                <a href="javascript:void(0);" class="btn btn-success" title="Export to Excel" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel"></i> Excel
+                </a>
+                <button class="btn btn-danger" onclick="exportToPDF()" title="Export to PDF">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="table" id="bookingTable">
+        <thead>
+            <tr>
+                <th>Serial No</th>
+                <th>@Html.DisplayNameFor(model => model.BookingDate)</th>
+                @* <th>@Html.DisplayNameFor(model => model.Status)</th> *@
+                <th>@Html.DisplayNameFor(model => model.TotalPayment)</th>
+                <th>@Html.DisplayNameFor(model => model.Advance)</th>
+                <th>@Html.DisplayNameFor(model => model.PickupPoint.PickupPoint1)</th>
+                <th>@Html.DisplayNameFor(model => model.Droppoint)</th>
+                <th>Trip</th>
+                <th>@Html.DisplayNameFor(model => model.User.UserName)</th>
+                <th>@Html.DisplayNameFor(model => model.User.PhoneNumber)</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int serialNumber = 1; // Initialize serial number counter
+            }
+            @foreach (var item in Model)
+            {
+                // Set data-trip attribute: if Trip is null, use "car booking"
+                var tripDisplay = item.Trip != null ? item.Trip.TourName : "Car Booking";
+                <tr data-trip="@tripDisplay.ToLower()">
+                    <td>@serialNumber</td>
+                    <td>@(item.BookingDate.HasValue ? item.BookingDate.Value.ToString("dd-MM-yyyy") : "NA")</td>
+                    @* <td>@Html.DisplayFor(modelItem => item.Status)</td> *@
+                    <td>@Html.DisplayFor(modelItem => item.TotalPayment)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Advance)</td>
+                    <td>@Html.DisplayFor(modelItem => item.PickupPoint.PickupPoint1)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Droppoint)</td>
+                    <td>
+                        @if (item.Trip != null)
+                        {
+                            @Html.DisplayFor(modelItem => item.Trip.TourName)
+                        }
+                        else
+                        {
+                            @:Car Booking
+                        }
+                    </td>
+                    <td>@Html.DisplayFor(modelItem => item.User.UserName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.User.PhoneNumber)</td>
+                    <td>
+                        <a href='@Url.Action("Edit", new { id = item.BookingId })'>
+                            <img src='~/images/edit (1).png' alt='Edit' style='width: 25px; height: 25px;' />
+                        </a>
+                        <a href='@Url.Action("Details", new { id = item.BookingId })'>
+                            <img src='~/images/investigation_1723432.png' alt='Details' style='width: 25px; height: 25px;' />
+                        </a>
+                         <a href='@Url.Action("Delete", new { id = item.BookingId })'>
+                            <img src='~/images/delete (1).png' alt='Delete' style='width: 25px; height: 25px;' />
+                        </a>
+                        <a href='@Url.Action("Index", "BookingSeats", new { bookingId = item.BookingId })' class="btn btn-outline-primary btn-sm" title="View Booking Seat">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                serialNumber++; // Increment serial number
+            }
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.24/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+    function exportToExcel() {
+        var tripFilter = document.getElementById("tripFilter").value; // Get selected trip filter
+        window.location.href = '@Url.Action("ExportToExcel", "Bookings")?tripFilter=' + tripFilter; // Redirect with filter
+    }
+
+    function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Add title
+        doc.text('Booking List', 14, 10);
+
+        // Define table headers
+        const tableHeaders = ["Serial No", "Booking Date", "Total Payment", "Advance", "Pickup Point", "Drop Point", "Trip", "User"];
+
+        const rows = [];
+        const allRows = document.querySelectorAll("#bookingTable tbody tr");
+
+        const searchInput = document.getElementById('searchInput').value.toLowerCase();
+        const tripFilter = document.getElementById('tripFilter').value.toLowerCase();
+
+        allRows.forEach((row, index) => {
+            const tripName = row.getAttribute('data-trip');
+            const textContent = row.innerText.toLowerCase();
+
+            const matchesSearch = textContent.includes(searchInput);
+            const matchesTrip = tripFilter === "" || tripName === tripFilter;
+
+            if (matchesSearch && matchesTrip) {
+                const rowData = [];
+                const cells = row.getElementsByTagName("td");
+
+                rowData.push(index + 1); // Serial No
+                rowData.push(cells[1].innerText); // Booking Date
+                rowData.push(cells[2].innerText); // Total Payment
+                rowData.push(cells[3].innerText); // Advance
+                rowData.push(cells[4].innerText); // Pickup Point
+                rowData.push(cells[5].innerText); // Drop Point
+                rowData.push(cells[6].innerText); // Trip
+                rowData.push(cells[7].innerText); // User
+
+                rows.push(rowData);
+            }
+        });
+
+        // Generate the PDF table
+        doc.autoTable({
+            head: [tableHeaders],
+            body: rows,
+            startY: 20,
+            theme: 'grid',
+            headStyles: { fillColor: [22, 160, 133] },
+            styles: { fontSize: 10 },
+            columnStyles: { 0: { cellWidth: 20 } },
+        });
+
+        // Save the PDF
+        doc.save('BookingList.pdf');
+    }
+
+    // Function to toggle search bar visibility
+    document.getElementById('searchIcon').onclick = function () {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.style.display = searchInput.style.display === 'none' ? 'block' : 'none';
+        if (searchInput.style.display === 'block') {
+            searchInput.focus(); // Focus on search input when opened
+        }
+    };
+
+    document.getElementById('tripFilter').onchange = function () {
+        filterTable();
+    };
+
+    // Function to filter the table based on search input and trip filter
+    function filterTable() {
+        const searchInput = document.getElementById('searchInput').value.toLowerCase();
+        const tripFilter = document.getElementById('tripFilter').value.toLowerCase();
+        const rows = document.querySelectorAll("#bookingTable tbody tr");
+
+        rows.forEach(row => {
+            const tripName = row.getAttribute('data-trip').toLowerCase();
+            const textContent = row.innerText.toLowerCase();
+
+            const matchesSearch = textContent.includes(searchInput);
+            const matchesTrip = tripFilter === "" || tripName.includes(tripFilter);
+
+            if (matchesSearch && matchesTrip) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+</script>
