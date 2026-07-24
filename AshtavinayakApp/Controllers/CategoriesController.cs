@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using AshtavinayakAPP.Models;
@@ -18,12 +19,21 @@ namespace AshtavinayakAPP.Controllers
             _context = context;
         }
 
+        // CRIT-12: session guard — matches pattern used by all other MVC controllers
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            var userSession = context.HttpContext.Session.GetString("User");
+            if (string.IsNullOrEmpty(userSession))
+                context.Result = new RedirectToActionResult("Login", "Home", null);
+            base.OnActionExecuting(context);
+        }
+
 
 
         public async Task<IActionResult> Index(int page = 1)
         {
             int pageSize = 10; // Number of records per page
-            int totalRecords = await _context.Categories.CountAsync(); // Get total number of categories
+            int totalRecords = await _context.Categories.Where(c => !c.IsDeleted).CountAsync(); // CRIT-12/HIGH-09: exclude soft-deleted
             int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize); // Calculate total pages
 
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -201,25 +201,61 @@ namespace AshtavinayakAPP.Controllers
 
         public async Task<IActionResult> ExportToPDF()
         {
-            var bookings = await _context.Bookings
-                .Include(b => b.PickupPoint) // Include related PickupPoint
-                .Include(b => b.Trip) // Include related Trip
-                .Include(b => b.User) // Include related User
-                .ToListAsync(); // Get all records, ignoring pagination
+            var bookings = await _context.Bookings.Where(x => !x.IsDeleted)
+                .Include(b => b.PickupPoint)
+                .Include(b => b.Trip)
+                .Include(b => b.User)
+                .OrderByDescending(b => b.BookingId)
+                .ToListAsync();
 
-            // Transform the bookings data into a simpler form for the PDF generation
-            var bookingData = bookings.Select(b => new
+            // Build an HTML table for PDF rendering
+            var sb = new System.Text.StringBuilder();
+            sb.Append(@"<html><body style='font-family:Arial,sans-serif;font-size:12px;'>
+                <h2 style='text-align:center;'>Ashtavinayak Tour — Bookings Report</h2>
+                <table border='1' cellpadding='5' cellspacing='0' width='100%'>
+                <thead style='background:#4a90d9;color:#fff;'>
+                  <tr>
+                    <th>#</th><th>Booking Code</th><th>Customer</th>
+                    <th>Tour Name</th><th>Date</th>
+                    <th>Pickup</th><th>Total (₹)</th><th>Advance (₹)</th>
+                  </tr>
+                </thead><tbody>");
+
+            int sr = 1;
+            foreach (var b in bookings)
             {
-                bookingDate = b.BookingDate?.ToString("yyyy-MM-dd") ?? "",
-                totalPayment = b.TotalPayment.ToString(),
-                advance = b.Advance.ToString(),
-                pickupPoint = b.PickupPoint?.PickupPoint1 ?? "",
-                droppoint = b.Droppoint ?? "",
-                tourName = b.Trip?.TourName ?? "",
-                username = b.User?.UserName ?? ""
-            }).ToList();
+                var row = sr++ % 2 == 0 ? "background:#f2f2f2;" : "";
+                sb.Append($@"<tr style='{row}'>
+                    <td>{sr - 1}</td>
+                    <td>{System.Net.WebUtility.HtmlEncode(b.BookingCode ?? "")}</td>
+                    <td>{System.Net.WebUtility.HtmlEncode(b.User?.UserName ?? "")}</td>
+                    <td>{System.Net.WebUtility.HtmlEncode(b.Trip?.TourName ?? "")}</td>
+                    <td>{b.BookingDate?.ToString("dd MMM yyyy") ?? ""}</td>
+                    <td>{System.Net.WebUtility.HtmlEncode(b.PickupPoint?.PickupPoint1 ?? "")}</td>
+                    <td>{b.TotalPayment}</td>
+                    <td>{b.Advance}</td>
+                  </tr>");
+            }
 
-            return Json(bookingData); // Return the data as JSON to the client
+            sb.Append("</tbody></table></body></html>");
+
+            // Render HTML → PDF using SelectPdf (already installed in project)
+            var converter = new SelectPdf.HtmlToPdf();
+            converter.Options.PdfPageSize    = SelectPdf.PdfPageSize.A4;
+            converter.Options.PdfPageOrientation = SelectPdf.PdfPageOrientation.Landscape;
+            converter.Options.MarginTop      = 15;
+            converter.Options.MarginBottom   = 15;
+            converter.Options.MarginLeft     = 15;
+            converter.Options.MarginRight    = 15;
+
+            var doc    = converter.ConvertHtmlString(sb.ToString());
+            var stream = new MemoryStream();
+            doc.Save(stream);
+            doc.Close();
+            stream.Position = 0;
+
+            string fileName = $"Bookings_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
+            return File(stream, "application/pdf", fileName);
         }
 
 

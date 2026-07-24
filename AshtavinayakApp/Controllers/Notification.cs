@@ -1,11 +1,12 @@
-﻿using AshtavinayakAPP.Models;
+using AshtavinayakAPP.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace AshtvinayakAPP.Controllers
+namespace AshtavinayakAPP.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
@@ -13,11 +14,15 @@ namespace AshtvinayakAPP.Controllers
     public class NotificationController : ControllerBase
     {
         private readonly AshtvinayakTravelContext _context;
+        private readonly ILogger<NotificationController> _logger;
 
-        public NotificationController(AshtvinayakTravelContext context)
+        public NotificationController(AshtvinayakTravelContext context, ILogger<NotificationController> logger)
         {
             _context = context;
+            _logger = logger;
         }
+
+        [Authorize(Roles = "Admin")] // MED-02
 
         [HttpPost("SendNotificationsForTrip/{tripId}")]
         public async Task<ActionResult<object>> SendNotificationsForTrip(int tripId)
@@ -74,7 +79,8 @@ namespace AshtvinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "Internal server error.", Error = ex.Message });
+                _logger.LogError(ex, "SendNotificationsForTrip failed for TripId={TripId}", tripId);
+                return StatusCode(500, new { Message = "An unexpected error occurred. Please try again." });
             }
         }
 
@@ -85,6 +91,13 @@ namespace AshtvinayakAPP.Controllers
         {
             try
             {
+                // MED-12: IDOR guard — a caller may only read their own notifications unless Admin.
+                var callerId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                if (!User.IsInRole("Admin") && callerId != userId.ToString())
+                {
+                    return Forbid();
+                }
+
                 // Step 1: Fetch all trips booked by this UserId
                 var trips = await _context.Bookings.Where(x => !x.IsDeleted)
                     .Where(b => b.UserId == userId)
@@ -134,7 +147,8 @@ namespace AshtvinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "Internal server error.", Error = ex.Message });
+                _logger.LogError(ex, "GetUserNotifications failed for UserId={UserId}", userId);
+                return StatusCode(500, new { Message = "An unexpected error occurred. Please try again." });
             }
         }
 

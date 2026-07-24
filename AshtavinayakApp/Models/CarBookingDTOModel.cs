@@ -1,6 +1,6 @@
-﻿namespace AshtavinayakAPP.Models
+namespace AshtavinayakAPP.Models
 {
-    public partial record CarBookingDTOModel
+    public class CarBookingDTOModel  // LOW-03: was `partial record` — incorrect for a mutable DTO
     {
         public int? UserId { get; set; }
         public int? TripId { get; set; }               // optional, used in response

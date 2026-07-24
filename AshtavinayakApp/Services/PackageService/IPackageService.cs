@@ -1,6 +1,6 @@
-﻿using AshtavinayakAPP.Models;
+using AshtavinayakAPP.Models;
 
-namespace AshtavinayakAPP.Services.PakageService
+namespace AshtavinayakAPP.Services.PackageService  // LOW-01: fixed typo (was PakageService)
 {
     public interface IPackageService
     {

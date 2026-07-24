@@ -1,14 +1,43 @@
-﻿using AshtavinayakAPP.Models;
+using AshtavinayakAPP.Models;
 using Razorpay.Api;
 using Microsoft.Extensions.Configuration;
 
 namespace AshtavinayakAPP.Services.RazorPay
 {
+    /// <summary>
+    /// Handles Razorpay payment order creation.
+    /// Reads API credentials from configuration — never hard-coded.
+    ///
+    /// Required config keys (set via environment variables in Production):
+    ///   Razorpay__Key     → Razorpay:Key
+    ///   Razorpay__Secret  → Razorpay:Secret
+    /// </summary>
     public class RazorpayService : IRazorpayService
     {
-        private readonly string _razorpayKey = "rzp_live_RZB9b8zsHwLGjY";
-        private readonly string _razorpaySecret = "IL0f3TDRsp43P13muih0CnWv";
-        public async Task<(bool Success, string Message, object Data)> GenarateRazopayOrderAsynch(RazorpayOrderRequestModel razorpayOrderRequestModel)
+        private readonly string _razorpayKey;
+        private readonly string _razorpaySecret;
+        private readonly ILogger<RazorpayService> _logger;
+
+        public RazorpayService(IConfiguration configuration, ILogger<RazorpayService> logger)
+        {
+            _logger = logger;
+
+            _razorpayKey = configuration["Razorpay:Key"]
+                ?? throw new InvalidOperationException(
+                    "Razorpay Key 'Razorpay:Key' is not configured. " +
+                    "In Development, set it in appsettings.Development.json. " +
+                    "In Production, set the environment variable 'Razorpay__Key'.");
+
+            _razorpaySecret = configuration["Razorpay:Secret"]
+                ?? throw new InvalidOperationException(
+                    "Razorpay Secret 'Razorpay:Secret' is not configured. " +
+                    "In Development, set it in appsettings.Development.json. " +
+                    "In Production, set the environment variable 'Razorpay__Secret'.");
+        }
+
+        /// <inheritdoc/>
+        public async Task<(bool Success, string Message, object Data)> GenarateRazopayOrderAsynch(
+            RazorpayOrderRequestModel razorpayOrderRequestModel)
         {
             try
             {
@@ -20,33 +49,31 @@ namespace AshtavinayakAPP.Services.RazorPay
 
                     var options = new Dictionary<string, object>
                     {
-                        { "amount", razorpayOrderRequestModel.Amount * 100 }, // Amount in paise
-                        { "currency", "INR" },
-                        { "receipt", receipt },
+                        { "amount",          razorpayOrderRequestModel.Amount * 100 }, // Convert to paise
+                        { "currency",        "INR" },
+                        { "receipt",         receipt },
                         { "payment_capture", 1 }
                     };
 
                     Order order = client.Order.Create(options);
 
-                    var orderId = order["id"]?.ToString();
-                    var amount = Convert.ToInt32(order["amount"]);
-                    var currency = order["currency"]?.ToString();
-                    var receiptValue = order["receipt"]?.ToString();
-
                     return new
                     {
-                        OrderId = orderId,
-                        Amount = amount,
-                        Currency = currency,
-                        Receipt = receiptValue
+                        OrderId  = order["id"]?.ToString(),
+                        Amount   = Convert.ToInt32(order["amount"]),
+                        Currency = order["currency"]?.ToString(),
+                        Receipt  = order["receipt"]?.ToString()
                     };
                 });
 
-                return (true, "Razorpay order created successfully", result);
+                _logger.LogInformation("Razorpay order created. Receipt: {Receipt}", (string?)result.Receipt);
+                return (true, "Razorpay order created successfully", (object)result);
             }
             catch (Exception ex)
             {
-                return (false, "Failed to create Razorpay order", new { Error = ex.Message });
+                _logger.LogError(ex, "Failed to create Razorpay order for amount {Amount}.",
+                    razorpayOrderRequestModel.Amount);
+                return (false, "Failed to create Razorpay order. Please try again.", null);
             }
         }
     }

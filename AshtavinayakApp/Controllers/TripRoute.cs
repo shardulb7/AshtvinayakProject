@@ -14,10 +14,12 @@ namespace AshtavinayakAPP.Controllers
     public class TripRouteController : ControllerBase
     {
         private readonly AshtvinayakTravelContext _context;
+        private readonly ILogger<TripRouteController> _logger;
 
-        public TripRouteController(AshtvinayakTravelContext context)
+        public TripRouteController(AshtvinayakTravelContext context, ILogger<TripRouteController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/TripRoutes
@@ -50,7 +52,8 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetTripRoutes failed for CityId={CityId} PackageId={PackageId}", cityId, packageId);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
@@ -58,7 +61,7 @@ namespace AshtavinayakAPP.Controllers
 
         private bool TripRouteExists(int id)
         {
-            return _context.TripRoutes.Any(e => e.Trid == id);
+            return _context.TripRoutes.Any(e => e.Trid == id && !e.IsDeleted);
         }
     }
 }

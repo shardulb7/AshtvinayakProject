@@ -1,4 +1,4 @@
-﻿@model AshtavinayakAPP.Models.Transaction
+@model AshtavinayakAPP.Models.Transaction
 
 @{
     ViewData["Title"] = "Details";
@@ -11,7 +11,7 @@
 
         <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
             <h4>Details Transaction</h4>
-            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+            <a asp-action="Index" class="close-btn" title="Back to List">?</a>
         </div>
 
         <hr />
@@ -86,7 +86,7 @@
                                         <dt>@Html.DisplayNameFor(model => model.Booking.BookingId)</dt>
                                     </div>
                                     <div class="col-sm-10 col-md-8">
-                                        <dd>@Html.DisplayFor(model => model.Booking.BookingId)</dd>
+                                        <dd>@(Model?.Booking?.BookingId.ToString() ?? "-")</dd>
                                     </div>
                                 </div>
                             </div>
@@ -103,3 +103,4 @@
 
     </div>
 </div>
+

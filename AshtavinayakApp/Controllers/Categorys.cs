@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AshtavinayakAPP.Models;
 using System.Collections.Generic;
@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace AshtavinayakAPP.Controllers
 {
+    // MED-13: was class-level Admin-only, which blocked GetCategories/GetCategory — pure catalog
+    // reads with no sensitive data, needed by the mobile app's browsing flow. Matches the
+    // GET-open/mutations-Admin-gated pattern already used in Seats.cs and Pickup.cs.
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
@@ -47,6 +50,7 @@ namespace AshtavinayakAPP.Controllers
         }
 
         // POST: api/Categories
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<Category>> PostCategory(Category category)
         {
@@ -64,6 +68,7 @@ namespace AshtavinayakAPP.Controllers
         }
 
         // PUT: api/Categories/5
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCategory(int id, Category category)
         {
@@ -98,6 +103,7 @@ namespace AshtavinayakAPP.Controllers
         }
 
         // DELETE: api/Categories/5
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
@@ -107,19 +113,22 @@ namespace AshtavinayakAPP.Controllers
                 return NotFound(new { Message = "Category not found." });
             }
 
-            _context.Categories.Remove(category);
+            // CRIT-17: soft-delete — prevent FK constraint violation if packages/history reference this category
+            category.IsDeleted = true;
+            _context.Categories.Update(category);
             await _context.SaveChangesAsync();
 
             return Ok(new
             {
-                Message = "User deleted successfully.",
-                DeletedUserID = id
+                Message       = "Category deleted successfully.",
+                DeletedItemId = id
             });
         }
 
         private bool CategoryExists(int id)
         {
-            return _context.Categories.Any(e => e.CategoryId == id);
+            return _context.Categories.Any(e => e.CategoryId == id && !e.IsDeleted);
         }
     }
 }
+

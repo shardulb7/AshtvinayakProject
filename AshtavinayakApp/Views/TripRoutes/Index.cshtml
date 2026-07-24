@@ -1,4 +1,4 @@
-﻿@model IEnumerable<AshtavinayakAPP.Models.TripRoute>
+@model IEnumerable<AshtavinayakAPP.Models.TripRoute>
 
 @{
     ViewData["Title"] = "TripRoute Index";
@@ -50,15 +50,13 @@
                         @foreach (var point in item.PointName.Split('|'))
                         {
                             <span style="color: black;">@point</span>
-
                             @(point != item.PointName.Split('|').Last() ? ", " : "")
                         }
                     </td>
 
-
                     <td>@Html.DisplayFor(modelItem => item.Day)</td>
-                    <td>@Html.DisplayFor(modelItem => item.City.CityName)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Package.PackageName)</td>
+                    <td>@(item.City?.CityName ?? "-")</td>
+                    <td>@(item.Package?.PackageName ?? "-")</td>
                     <td>
                         <a href='@Url.Action("Edit", new { id = item.Trid })'>
                             <img src='~/images/edit (1).png' alt='Edit' style='width: 25px; height: 25px;' />
@@ -75,23 +73,28 @@
                     serialNumber++; // Increment serial number
                 }
             }
+
         </tbody>
     </table>
 
     <div class="pagination">
-        @if (ViewData["CurrentPage"] != null && (int)ViewData["CurrentPage"] > 1)
+        @{
+            int currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+            int totalPages  = (int)(ViewData["TotalPages"]  ?? 1);
+        }
+        @if (currentPage > 1)
         {
-            <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] - 1 })">Previous</a>
+            <a href="@Url.Action("Index", new { page = currentPage - 1 })">Previous</a>
         }
 
-        @for (int i = 1; i <= (int)ViewData["TotalPages"]; i++)
+        @for (int i = 1; i <= totalPages; i++)
         {
-            <a href="@Url.Action("Index", new { page = i })" class="@(i == (int)ViewData["CurrentPage"] ? "active" : "")">@i</a>
+            <a href="@Url.Action("Index", new { page = i })" class="@(i == currentPage ? "active" : "")">@i</a>
         }
 
-        @if (ViewData["CurrentPage"] != null && (int)ViewData["CurrentPage"] < (int)ViewData["TotalPages"])
+        @if (currentPage < totalPages)
         {
-            <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] + 1 })">Next</a>
+            <a href="@Url.Action("Index", new { page = currentPage + 1 })">Next</a>
         }
     </div>
 
@@ -137,3 +140,4 @@
         }
     }
 </script>
+

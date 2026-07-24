@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using AshtavinayakAPP.Models;
@@ -16,6 +17,15 @@ namespace AshtavinayakAPP.Controllers
         public TourDestinationsController(AshtvinayakTravelContext context)
         {
             _context = context;
+        }
+
+        // CRIT-14: session guard
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            var userSession = context.HttpContext.Session.GetString("User");
+            if (string.IsNullOrEmpty(userSession))
+                context.Result = new RedirectToActionResult("Login", "Home", null);
+            base.OnActionExecuting(context);
         }
 
         // GET: TourDestinations
@@ -151,7 +161,7 @@ namespace AshtavinayakAPP.Controllers
 
         private bool TourDestinationExists(int id)
         {
-            return _context.TourDestinations.Any(e => e.Id == id);
+            return _context.TourDestinations.Any(e => e.Id == id && !e.IsDeleted);
         }
     }
 }

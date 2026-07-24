@@ -1,17 +1,22 @@
-﻿using AshtavinayakAPP.Models;
+using AshtavinayakAPP.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+
+namespace AshtavinayakAPP.Controllers // LOW-05: was missing namespace declaration
+{
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class HistoryController : ControllerBase
 {
     private readonly AshtvinayakTravelContext _context;
+    private readonly ILogger<HistoryController> _logger;
 
-    public HistoryController(AshtvinayakTravelContext context)
+    public HistoryController(AshtvinayakTravelContext context, ILogger<HistoryController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -59,7 +64,8 @@ public class HistoryController : ControllerBase
         }
         catch (System.Exception ex)
         {
-            return StatusCode(500, "Internal server error: " + ex.Message);
+            _logger.LogError(ex, "GetHistories failed");
+            return StatusCode(500, "An unexpected error occurred. Please try again.");
         }
     }
 
@@ -99,7 +105,8 @@ public class HistoryController : ControllerBase
         }
         catch (System.Exception ex)
         {
-            return StatusCode(500, "Internal server error: " + ex.Message);
+            _logger.LogError(ex, "GetHistory failed for HistoryId={HistoryId}", id);
+            return StatusCode(500, "An unexpected error occurred. Please try again.");
         }
     }
 
@@ -125,7 +132,8 @@ public class HistoryController : ControllerBase
         }
         catch (System.Exception ex)
         {
-            return StatusCode(500, "Internal server error: " + ex.Message);
+            _logger.LogError(ex, "PostHistory failed for BookingId={BookingId}", history.BookingId);
+            return StatusCode(500, "An unexpected error occurred. Please try again.");
         }
     }
 
@@ -167,7 +175,8 @@ public class HistoryController : ControllerBase
         }
         catch (System.Exception ex)
         {
-            return StatusCode(500, "Internal server error: " + ex.Message);
+            _logger.LogError(ex, "PutHistory failed for HistoryId={HistoryId}", id);
+            return StatusCode(500, "An unexpected error occurred. Please try again.");
         }
     }
 
@@ -183,7 +192,7 @@ public class HistoryController : ControllerBase
                 return NotFound("History not found.");
             }
             history.IsDeleted = true;
-            _context.Histories.Remove(history);
+            _context.Histories.Update(history);  // CRIT-16: soft-delete — persist flag, never physically delete
             await _context.SaveChangesAsync();
 
             return Ok(new
@@ -194,12 +203,15 @@ public class HistoryController : ControllerBase
         }
         catch (System.Exception ex)
         {
-            return StatusCode(500, "Internal server error: " + ex.Message);
+            _logger.LogError(ex, "DeleteHistory failed for HistoryId={HistoryId}", id);
+            return StatusCode(500, "An unexpected error occurred. Please try again.");
         }
     }
 
     private bool HistoryExists(int id)
     {
-        return _context.Histories.Any(e => e.HistoryId == id);
+        return _context.Histories.Any(e => e.HistoryId == id && !e.IsDeleted);
     }
 }
+
+} // end namespace AshtavinayakAPP.Controllers

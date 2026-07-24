@@ -3,9 +3,10 @@ using AshtavinayakAPP.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using System.Linq;
-using Humanizer;
 using AshtavinayakAPP.Services.BookingSrc;
+using AshtavinayakAPP.Services.AgentSrc;
 using Microsoft.AspNetCore.Authorization;
+using System.IdentityModel.Tokens.Jwt;
 
 
 namespace AshtavinayakAPP.Controllers
@@ -16,10 +17,12 @@ namespace AshtavinayakAPP.Controllers
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookinService;
+        private readonly IAgentService _agentService;
 
-        public BookingController(IBookingService bookinService)
+        public BookingController(IBookingService bookinService, IAgentService agentService)
         {
             _bookinService= bookinService;
+            _agentService = agentService;
         }
 
         [HttpGet("FamilyBookingHistory/{userId}")]
@@ -49,7 +52,21 @@ namespace AshtavinayakAPP.Controllers
         [HttpPost("CreateBookingWithSeats")]
         public async Task<ActionResult> CreateBookingWithSeats([FromBody] BookingRequestDto request)
         {
-            var (success, message, data) = await _bookinService.CreateBookingWithSeatsAsync(request);
+            // Agent identity/commission is always derived from the JWT, never trusted from the
+            // request body — mirrors the pattern used for Transaction/Notification ownership checks.
+            int? agentId = null;
+            decimal? commissionPercentage = null;
+            if (User.IsInRole("Agent"))
+            {
+                var agentIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                if (int.TryParse(agentIdClaim, out var parsedAgentId))
+                {
+                    agentId = parsedAgentId;
+                    commissionPercentage = await _agentService.GetEffectiveCommissionAsync(parsedAgentId);
+                }
+            }
+
+            var (success, message, data) = await _bookinService.CreateBookingWithSeatsAsync(request, agentId, commissionPercentage);
 
             if (success)
                 return Ok(new { Message = message, Data = data });

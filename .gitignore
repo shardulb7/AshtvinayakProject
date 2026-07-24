@@ -196,12 +196,10 @@ PublishScripts/
 *.nupkg
 # NuGet Symbol Packages
 *.snupkg
-# The packages folder can be ignored because of Package Restore
-**/[Pp]ackages/*
-# except build/, which is used as an MSBuild target.
-!**/[Pp]ackages/build/
-# Uncomment if necessary however generally it will be regenerated when needed
-#!**/[Pp]ackages/repositories.config
+# Note: this project uses PackageReference (not packages.config), so there's no
+# top-level packages/ restore folder to ignore. The old blanket rule for that
+# (**/[Pp]ackages/*) was removed here because it was also silently matching
+# AshtavinayakApp/Views/Packages/, an actual application folder.
 # NuGet v3's project.json files produces more ignorable files
 *.nuget.props
 *.nuget.targets

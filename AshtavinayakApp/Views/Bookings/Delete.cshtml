@@ -1,4 +1,4 @@
-﻿@model AshtavinayakAPP.Models.Booking
+@model AshtavinayakAPP.Models.Booking
 
 @{
     ViewData["Title"] = "Delete";
@@ -69,13 +69,13 @@
                         <dt>@Html.DisplayNameFor(model => model.Trip)</dt>
                     </div>
                     <div class="col-md-8">
-                        <dd>@Html.DisplayFor(model => model.Trip.TourName)</dd>
+                        <dd>@(Model?.Trip?.TourName ?? "-")</dd>
                     </div>
                     <div class="col-md-4">
                         <dt>@Html.DisplayNameFor(model => model.User)</dt>
                     </div>
                     <div class="col-md-8">
-                        <dd>@Html.DisplayFor(model => model.User.UserName)</dd>
+                        <dd>@(Model?.User?.UserName ?? "-")</dd>
                     </div>
                 </dl>
 

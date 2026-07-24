@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace AshtvinayakAPP.Controllers
+namespace AshtavinayakAPP.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
@@ -11,10 +11,12 @@ namespace AshtvinayakAPP.Controllers
     public class VehicleController : ControllerBase
     {
         private readonly AshtvinayakTravelContext _context;
+        private readonly ILogger<VehicleController> _logger;
 
-        public VehicleController(AshtvinayakTravelContext context)
+        public VehicleController(AshtvinayakTravelContext context, ILogger<VehicleController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/vehicles
@@ -56,7 +58,8 @@ namespace AshtvinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetAllVehicles failed");
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
@@ -100,7 +103,8 @@ namespace AshtvinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetVehicleById failed for VehicleId={VehicleId}", vehicleId);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
     }

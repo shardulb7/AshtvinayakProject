@@ -1,4 +1,4 @@
-﻿@model IEnumerable<AshtavinayakAPP.Models.User>
+@model IEnumerable<AshtavinayakAPP.Models.User>
 
 @{
     ViewData["Title"] = "Index";
@@ -69,19 +69,23 @@
     </table>
 
     <div class="pagination">
-        @if (ViewData["CurrentPage"] != null && (int)ViewData["CurrentPage"] > 1)
+        @{
+            int currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+            int totalPages  = (int)(ViewData["TotalPages"]  ?? 1);
+        }
+        @if (currentPage > 1)
         {
-            <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] - 1 })">Previous</a>
+            <a href="@Url.Action("Index", new { page = currentPage - 1 })">Previous</a>
         }
 
-        @for (int i = 1; i <= (int)ViewData["TotalPages"]; i++)
+        @for (int i = 1; i <= totalPages; i++)
         {
-            <a href="@Url.Action("Index", new { page = i })" class="@(i == (int)ViewData["CurrentPage"] ? "active" : "")">@i</a>
+            <a href="@Url.Action("Index", new { page = i })" class="@(i == currentPage ? "active" : "")">@i</a>
         }
 
-        @if (ViewData["CurrentPage"] != null && (int)ViewData["CurrentPage"] < (int)ViewData["TotalPages"])
+        @if (currentPage < totalPages)
         {
-            <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] + 1 })">Next</a>
+            <a href="@Url.Action("Index", new { page = currentPage + 1 })">Next</a>
         }
     </div>
 
@@ -134,3 +138,4 @@
         }
     }
 </script>
+

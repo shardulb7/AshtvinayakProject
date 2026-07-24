@@ -1,12 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AshtavinayakAPP.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AshtavinayakAPP.Services.PakageService;
-using Microsoft.CodeAnalysis.Operations;
+using AshtavinayakAPP.Services.PackageService; // LOW-01: fixed typo (was PakageService)
 using Microsoft.AspNetCore.Authorization;
 
 namespace AshtavinayakAPP.Controllers
@@ -18,10 +17,12 @@ namespace AshtavinayakAPP.Controllers
     {
         private readonly AshtvinayakTravelContext _context;
         private readonly IPackageService _packageService;
-        public PackageController(AshtvinayakTravelContext context,IPackageService packageService)
+        private readonly ILogger<PackageController> _logger;
+        public PackageController(AshtvinayakTravelContext context, IPackageService packageService, ILogger<PackageController> logger)
         {
             _context = context;
             _packageService = packageService;
+            _logger = logger;
         }
         [HttpGet("GetPackageByCateGoryId")]
         public async Task<IActionResult>GetPackageByCateGoryId(int id,bool isCarType=false)
@@ -79,7 +80,8 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetPackagePrice failed for CityId={CityId} CategoryId={CategoryId} PackageId={PackageId}", cityId, categoryId, packageId);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
@@ -119,7 +121,8 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetPackages failed for CityId={CityId} CategoryId={CategoryId}", cityId, categoryId);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
         [HttpGet("GetDropPointByCityIdAsync/{cityId}")]
@@ -130,7 +133,7 @@ namespace AshtavinayakAPP.Controllers
         }
         private bool PackageExists(int id)
         {
-            return _context.Packages.Any(e => e.PackageId == id);
+            return _context.Packages.Any(e => e.PackageId == id && !e.IsDeleted);
         }
     }
 }

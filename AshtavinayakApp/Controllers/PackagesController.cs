@@ -184,7 +184,7 @@ namespace AshtavinayakAPP.Controllers
 
         private bool PackageExists(int id)
         {
-            return _context.Packages.Any(e => e.PackageId == id);
+            return _context.Packages.Any(e => e.PackageId == id && !e.IsDeleted);
         }
     }
 }

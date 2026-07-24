@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,11 +20,6 @@ namespace AshtavinayakAPP.Controllers
         }
 
         // GET: DropUps
-        //public async Task<IActionResult> Index()
-        //{
-        //    var ashtvinayakTravelAppContext = _context.DropUps.Include(d => d.City);
-        //    return View(await ashtvinayakTravelAppContext.ToListAsync());
-        //}
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             var userSession = context.HttpContext.Session.GetString("User");
@@ -38,7 +33,7 @@ namespace AshtavinayakAPP.Controllers
         public async Task<IActionResult> Index(int page = 1)
         {
             int pageSize = 10; // Number of records per page
-            int totalRecords = await _context.DropUps.CountAsync(); // Get total number of drop-up records
+            int totalRecords = await _context.DropUps.Where(x => !x.IsDeleted).CountAsync(); // HIGH-09: exclude soft-deleted from count
             int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize); // Calculate total pages
 
             var dropUps = await _context.DropUps.Where(x => !x.IsDeleted)
@@ -188,7 +183,8 @@ namespace AshtavinayakAPP.Controllers
 
         private bool DropUpExists(int id)
         {
-            return _context.DropUps.Any(e => e.DroppointId == id);
+            return _context.DropUps.Any(e => e.DroppointId == id && !e.IsDeleted);
         }
     }
 }
+

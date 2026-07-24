@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using AshtavinayakAPP.Models;
-using Microsoft.AspNetCore.Mvc.Filters;
 using AshtavinayakAPP.Services.BookingSrc;
+using AshtavinayakAPP.Services.SmsService;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace AshtavinayakAPP.Controllers
 {
@@ -15,11 +16,19 @@ namespace AshtavinayakAPP.Controllers
     {
         private readonly AshtvinayakTravelContext _context;
         private readonly IBookingService _bookingService;
+        private readonly ISmsService _smsService;
+        private readonly IConfiguration _configuration;
 
-        public VehiclesController(AshtvinayakTravelContext context, IBookingService bookingService)
+        public VehiclesController(
+            AshtvinayakTravelContext context,
+            IBookingService bookingService,
+            ISmsService smsService,
+            IConfiguration configuration)
         {
-            _context = context;
+            _context        = context;
             _bookingService = bookingService;
+            _smsService     = smsService;
+            _configuration  = configuration;
         }
 
 
@@ -93,7 +102,7 @@ namespace AshtavinayakAPP.Controllers
         public async Task<IActionResult> Create([Bind("VehicleId,VehicleType,VehicleName,VehicleNumber,TotalSeats,DriverName,DriverContact,TripId")] Vehicle vehicle)
         {
 
-            if (ModelState.IsValid||vehicle.Trip==null)
+            if (ModelState.IsValid)   // HIGH-04: was incorrectly `|| vehicle.Trip == null` which always short-circuited validation
             {
 
                 _context.Add(vehicle);
@@ -112,7 +121,8 @@ namespace AshtavinayakAPP.Controllers
                     {
                         var message = $"Hello {booking.User.UserName}, Vehicle and driver details for your {tripName} trip are as below- Vehicle Reg No- {vehicle.VehicleNumber} Driver Name - {vehicle.DriverName + "-" + vehicle.DriverContact} HAPPY JOURNEY..!! -iTas";
 
-                        await SendSmsAsync(phone, message);
+                        var vehicleTemplateId = _configuration["SmsGateway:VehicleTemplateId"] ?? string.Empty;
+                        await _smsService.SendAsync(phone, message, vehicleTemplateId);
                     }
                 }
 
@@ -226,35 +236,9 @@ namespace AshtavinayakAPP.Controllers
 
         private bool VehicleExists(int id)
         {
-            return _context.Vehicles.Any(e => e.VehicleId == id);
+            return _context.Vehicles.Any(e => e.VehicleId == id && !e.IsDeleted);
         }
 
 
-        private async Task<bool> SendSmsAsync(string phoneNumber, string message)
-        {
-            try
-            {
-                using (var client = new HttpClient())
-                {
-                    string baseUrl = "http://bulksmspune.mobi/sendurlcomma.aspx";
-                    string encodedMessage = Uri.EscapeDataString(message);
-
-                    string url = $"{baseUrl}?user=iTasT&pwd=Akshay@7995&senderid=ITAST&CountryCode=91" +
-                                 $"&mobileno={phoneNumber}&msgtext={message}" +
-                                 $"&smstype = 9 & pe_id = 1701174522321104846 & template_id = 1707176034124432411";
-
-                    var response = await client.GetAsync(url);
-                    string responseContent = await response.Content.ReadAsStringAsync();
-
-                    Console.WriteLine($"SMS API Response: {responseContent}");
-
-                    return response.IsSuccessStatusCode;
-                }
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
-        }
     }
 }

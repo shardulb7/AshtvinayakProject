@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AshtavinayakAPP.Models;
 using System.Collections.Generic;
@@ -14,10 +14,12 @@ namespace AshtavinayakAPP.Controllers
     public class PickupController : ControllerBase
     {
         private readonly AshtvinayakTravelContext _context;
+        private readonly ILogger<PickupController> _logger;
 
-        public PickupController(AshtvinayakTravelContext context)
+        public PickupController(AshtvinayakTravelContext context, ILogger<PickupController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/PickupPoint/{cityId}
@@ -27,16 +29,16 @@ namespace AshtavinayakAPP.Controllers
             try
             {
                 // Fetch the PickupPoints based on CityId
-                var pickups = await _context.PickupPoints.Where(x => !x.IsDeleted)
+                var pickups = await _context.PickupPoints
+                    .Include(p => p.City)                    // CRIT-11: eagerly load City to prevent NullReferenceException
+                    .Where(x => !x.IsDeleted)
                     .Where(p => p.CityId == cityId)
                     .Select(p => new
                     {
-                        PickupPointName = p.PickupPoint1, // Assuming PickupPoint1 is the name field
-                        CityName = p.City.CityName,
-                        PickupPointID=p.PickupPointId,
+                        PickupPointName = p.PickupPoint1,
+                        CityName        = p.City.CityName,
+                        PickupPointID   = p.PickupPointId,
                         p.Time,
-                        
-                      
                     })
                     .ToListAsync();
 
@@ -59,10 +61,10 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                // Return internal server error in case of an exception
+                _logger.LogError(ex, "GetPickupsByCity failed for CityId={CityId}", cityId);
                 return StatusCode(500, new
                 {
-                    Message = "Internal server error: " + ex.Message,
+                    Message = "An unexpected error occurred. Please try again.",
                     Data = new List<object>()
                 });
             }
@@ -98,11 +100,13 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (System.Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetPickup failed for PickupPointId={PickupPointId}", id);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
         // POST: api/Pickups
+        [Authorize(Roles = "Admin")] // MED-02
         [HttpPost]
         public async Task<ActionResult<object>> PostPickup([FromBody] PickupPoint pickupPoint)
         {
@@ -124,11 +128,13 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (System.Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "PostPickup failed");
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
         // PUT: api/Pickups/{id}
+        [Authorize(Roles = "Admin")] // MED-02
         [HttpPut("{id}")]
         public async Task<IActionResult> PutPickup(int id, [FromBody] PickupPoint pickupPoint)
         {
@@ -176,11 +182,13 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (System.Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "PutPickup failed for PickupPointId={PickupPointId}", id);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
         // DELETE: api/Pickups/{id}
+        [Authorize(Roles = "Admin")] // MED-02
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePickup(int id)
         {
@@ -203,13 +211,15 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (System.Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "DeletePickup failed for PickupPointId={PickupPointId}", id);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
         private bool PickupExists(int id)
         {
-            return _context.PickupPoints.Any(e => e.PickupPointId == id);
+            return _context.PickupPoints.Any(e => e.PickupPointId == id && !e.IsDeleted);
         }
     }
 }
+

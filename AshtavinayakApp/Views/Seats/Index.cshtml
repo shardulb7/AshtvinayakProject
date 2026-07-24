@@ -1,4 +1,4 @@
-﻿@model IEnumerable<AshtavinayakAPP.Models.Seat>
+@model IEnumerable<AshtavinayakAPP.Models.Seat>
 
 @{
     ViewData["Title"] = "Index";
@@ -47,8 +47,8 @@
                     <td>@serialNumber</td>
                     <td>@Html.DisplayFor(modelItem => item.SeatNumber)</td>
                     <td>@Html.DisplayFor(modelItem => item.IsAvailable)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Package.PackageName)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Trip.TourName)</td>
+                    <td>@(item.Package?.PackageName ?? "-")</td>
+                    <td>@(item.Trip?.TourName ?? "-")</td>
 
                     <td>
                         <a href='@Url.Action("Edit", new { id = item.SeatId })'>
@@ -109,3 +109,4 @@
         }
     }
 </script>
+

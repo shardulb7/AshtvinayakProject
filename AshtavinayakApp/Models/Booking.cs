@@ -35,6 +35,14 @@ public partial class Booking
 
     public bool IsDeleted { get; set; }
 
+    public int? AgentId { get; set; }
+
+    // Snapshotted at booking time — later changes to commission rates must not
+    // retroactively alter the recorded figures on past bookings.
+    public decimal? CommissionPercentage { get; set; }
+
+    public decimal? CommissionAmount { get; set; }
+
     public virtual ICollection<History> Histories { get; set; } = new List<History>();
 
     public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
@@ -43,4 +51,5 @@ public partial class Booking
 
     public virtual User? User { get; set; }
     public virtual PickupPoint? PickupPoint { get; set; }
+    public virtual Agent? Agent { get; set; }
 }

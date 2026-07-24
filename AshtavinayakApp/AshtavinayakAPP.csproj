@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -11,6 +11,7 @@
 		<PackageReference Include="EPPlus.Core" Version="1.5.4" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.12" />
 		<PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.12" />
+		<PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.18" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -22,12 +23,14 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.1" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
-		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.3.1" />
-		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.4.0" />
 		<PackageReference Include="Razorpay" Version="3.3.2" />
 		<PackageReference Include="Select.HtmlToPdf.NetCore" Version="25.2.0" />
-		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.3.1" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.4.0" />
 		<PackageReference Include="System.Security.Claims" Version="4.3.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+		<PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+		<PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

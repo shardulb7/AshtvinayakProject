@@ -4,7 +4,8 @@ namespace AshtavinayakAPP.Services.BookingSrc
 {
     public interface IBookingService
     {
-        Task<(bool Success, string Message, object Data)> CreateBookingWithSeatsAsync(BookingRequestDto request);
+        Task<(bool Success, string Message, object Data)> CreateBookingWithSeatsAsync(
+            BookingRequestDto request, int? agentId = null, decimal? commissionPercentage = null);
 
         Task<(bool Success, string Message, object Data)> BookCarAsync(CarBookingDTOModel request);
 

@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using AshtavinayakAPP.Models;
@@ -18,17 +19,22 @@ namespace AshtavinayakAPP.Controllers
             _context = context;
         }
 
+        // CRIT-13: session guard
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            var userSession = context.HttpContext.Session.GetString("User");
+            if (string.IsNullOrEmpty(userSession))
+                context.Result = new RedirectToActionResult("Login", "Home", null);
+            base.OnActionExecuting(context);
+        }
+
         // GET: Cities
-        //public async Task<IActionResult> Index()
-        //{
-        //    return View(await _context.Cities.ToListAsync());
-        //}
 
 
         public async Task<IActionResult> Index(int page = 1)
         {
             int pageSize = 10; // Number of records per page
-            int totalRecords = await _context.Cities.CountAsync(); // Get total number of cities
+            int totalRecords = await _context.Cities.Where(x => !x.IsDeleted).CountAsync(); // HIGH-08: exclude soft-deleted from count
             int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize); // Calculate total pages
 
             var cities = await _context.Cities.Where(x=>!x.IsDeleted)
@@ -172,7 +178,8 @@ namespace AshtavinayakAPP.Controllers
 
         private bool CityExists(int id)
         {
-            return _context.Cities.Any(e => e.CityId == id);
+            return _context.Cities.Any(e => e.CityId == id && !e.IsDeleted);
         }
     }
 }
+

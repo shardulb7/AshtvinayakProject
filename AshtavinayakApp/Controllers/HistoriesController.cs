@@ -210,7 +210,7 @@ namespace AshtavinayakAPP.Controllers
 
         private bool HistoryExists(int id)
         {
-            return _context.Histories.Any(e => e.HistoryId == id);
+            return _context.Histories.Any(e => e.HistoryId == id && !e.IsDeleted);
         }
     }
 }

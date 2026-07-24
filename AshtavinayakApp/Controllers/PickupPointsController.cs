@@ -196,7 +196,7 @@ namespace AshtavinayakAPP.Controllers
 
         private bool PickupPointExists(int id)
         {
-            return _context.PickupPoints.Any(e => e.PickupPointId == id);
+            return _context.PickupPoints.Any(e => e.PickupPointId == id && !e.IsDeleted);
         }
     }
 }

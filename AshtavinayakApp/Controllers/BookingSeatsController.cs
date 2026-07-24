@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -139,8 +139,8 @@ namespace AshtavinayakAPP.Controllers
                 new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId",
                                "UserName", bookingSeat.UserId);
             ViewData["BookingId"] =
-                new SelectList(_context.Users.Where(x => !x.IsDeleted), "BookingId",
-                               "BookingDate", bookingSeat.BookingId);
+                new SelectList(_context.Bookings.Where(x => !x.IsDeleted), "BookingId",  // HIGH-05: was _context.Users
+                               "BookingCode", bookingSeat.BookingId);
 
             return View(bookingSeat);
         }
@@ -165,8 +165,8 @@ namespace AshtavinayakAPP.Controllers
                 new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId",
                                "UserName", bookingSeat.UserId);
             ViewData["BookingId"] =
-                new SelectList(_context.Users.Where(x => !x.IsDeleted), "BookingId",
-                               "BookingDate", bookingSeat.BookingId);
+                new SelectList(_context.Bookings.Where(x => !x.IsDeleted), "BookingId",
+                               "BookingCode", bookingSeat.BookingId);
 
             return View(bookingSeat);
         }
@@ -214,8 +214,8 @@ namespace AshtavinayakAPP.Controllers
                 new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId",
                                "UserName", bookingSeat.UserId);
             ViewData["BookingId"] =
-                new SelectList(_context.Users.Where(x => !x.IsDeleted), "BookingId",
-                               "BookingDate", bookingSeat.BookingId);
+                new SelectList(_context.Bookings.Where(x => !x.IsDeleted), "BookingId",
+                               "BookingCode", bookingSeat.BookingId);
 
             return View(bookingSeat);
         }
@@ -315,7 +315,7 @@ namespace AshtavinayakAPP.Controllers
 
         private bool BookingSeatExists(int id)
         {
-            return _context.BookingSeats.Any(e => e.BookingSeatId == id);
+            return _context.BookingSeats.Any(e => e.BookingSeatId == id && !e.IsDeleted);
         }
     }
 }

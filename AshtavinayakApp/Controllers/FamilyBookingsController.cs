@@ -191,7 +191,7 @@ namespace AshtavinayakAPP.Controllers
 
         private bool FamilyBookingExists(int id)
         {
-            return _context.FamilyBookings.Any(e => e.FamilyId == id);
+            return _context.FamilyBookings.Any(e => e.FamilyId == id && !e.IsDeleted);
         }
     }
 }

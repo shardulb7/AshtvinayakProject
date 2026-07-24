@@ -1,5 +1,6 @@
 using AshtavinayakApp.Models;
 using AshtavinayakAPP.Models;
+using BCrypt.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
@@ -11,39 +12,35 @@ namespace AshtavinayakApp.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly AshtvinayakTravelContext _context;
+        private readonly IConfiguration _configuration;
 
-
-        public HomeController(ILogger<HomeController> logger, AshtvinayakTravelContext context)
+        public HomeController(ILogger<HomeController> logger, AshtvinayakTravelContext context, IConfiguration configuration)
         {
-            _logger = logger;
-            _context = context;
+            _logger        = logger;
+            _context       = context;
+            _configuration = configuration;
         }
 
-        //public override void OnActionExecuting(ActionExecutingContext context)
-        //{
-        //    var userSession = context.HttpContext.Session.GetString("User");
-        //    if (string.IsNullOrEmpty(userSession))
-        //    {
-        //        context.Result = new RedirectToActionResult("Login", "Home", null); // Redirect to login if no session
-        //    }
-        //    base.OnActionExecuting(context);
-        //}
 
-        public void OnActionExecuting(ActionExecutingContext context)
+        // Session guard: redirect unauthenticated requests to Login.
+        // Must use `override` — without it, the MVC pipeline never calls this method.
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
-            // Check if the session contains the "User" key
-            var userSession = context.HttpContext.Session.GetString("User");
+            // Login and Logout actions must be exempt — otherwise we create an infinite redirect
+            var action = context.ActionDescriptor.RouteValues["action"];
+            if (action == "Login" || action == "Logout")
+            {
+                base.OnActionExecuting(context);
+                return;
+            }
 
+            var userSession = context.HttpContext.Session.GetString("User");
             if (string.IsNullOrEmpty(userSession))
             {
-                // If no session exists, redirect to the login page
                 context.Result = new RedirectToActionResult("Login", "Home", null);
+                return;
             }
-        }
-
-        public void OnActionExecuted(ActionExecutedContext context)
-        {
-            // This can be left empty for now as we don't need to do anything after the action executes.
+            base.OnActionExecuting(context);
         }
         public IActionResult Login()
         {
@@ -55,16 +52,23 @@ namespace AshtavinayakApp.Controllers
         [HttpPost]
         public IActionResult Login(string username, string password)
         {
-            if (username == "admin" && password == "Admin@123")
+            var adminUsername = _configuration["Admin:Username"];
+            var adminPasswordHash = _configuration["Admin:PasswordHash"];
+
+            bool isValid = !string.IsNullOrWhiteSpace(adminUsername)
+                        && !string.IsNullOrWhiteSpace(adminPasswordHash)
+                        && username == adminUsername
+                        && BCrypt.Net.BCrypt.Verify(password, adminPasswordHash);
+
+            if (isValid)
             {
-                HttpContext.Session.SetString("User", username); // Store session
+                HttpContext.Session.SetString("User", username);
                 return RedirectToAction("Index", "Home");
             }
-            else
-            {
-                ViewBag.Error = "Invalid username or password.";
-                return View();
-            }
+
+            _logger.LogWarning("Failed admin login attempt for username: {Username}", username);
+            ViewBag.Error = "Invalid username or password.";
+            return View();
         }
 
 
@@ -76,7 +80,7 @@ namespace AshtavinayakApp.Controllers
 
 
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             var userSession = HttpContext.Session.GetString("User");
             if (string.IsNullOrEmpty(userSession))
@@ -84,42 +88,38 @@ namespace AshtavinayakApp.Controllers
                 return RedirectToAction("Login");
             }
 
+            // Fix 9: use async EF calls — synchronous .Count()/.ToList() block the thread pool
             var dashData = new Dashdata
             {
-                TotalBooking = _context.Bookings.Where(x => !x.IsDeleted)?.Count() ?? 0,
-                TotalTrips = _context.Trips.Where(x => !x.IsDeleted)?.Count() ?? 0,
-                TotalPackages = _context.Packages.Where(x => !x.IsDeleted)?.Count() ?? 0,
-                TotalTransactions = _context.Transactions.Where(x => !x.IsDeleted)?.Count() ?? 0
+                TotalBooking      = await _context.Bookings.Where(x => !x.IsDeleted).CountAsync(),
+                TotalTrips        = await _context.Trips.Where(x => !x.IsDeleted).CountAsync(),
+                TotalPackages     = await _context.Packages.Where(x => !x.IsDeleted).CountAsync(),
+                TotalTransactions = await _context.Transactions.Where(x => !x.IsDeleted).CountAsync()
             };
-            var recentPackages = _context.Packages.Where(x => !x.IsDeleted)
-                         .Include(p => p.City) // Ensure City is loaded
-                         .Include(p => p.Category) // Ensure Category is loaded
-                         .OrderByDescending(p => p.PackageId)  // Or use a Date field if available
+
+            var recentPackages = await _context.Packages.Where(x => !x.IsDeleted)
+                         .Include(p => p.City)
+                         .Include(p => p.Category)
+                         .OrderByDescending(p => p.PackageId)
                          .Take(3)
-                         .ToList();
+                         .ToListAsync();
 
-
-            var recentBookings = _context.Bookings.Where(x => !x.IsDeleted)
-                          .OrderByDescending(b => b.BookingId)  // Or use a Date field if available
+            var recentBookings = await _context.Bookings.Where(x => !x.IsDeleted)
+                          .OrderByDescending(b => b.BookingId)
                           .Take(6)
-                          .Include(b => b.User)  // Optional: to load related data like User
-                          .Include(b => b.Trip)  // Optional: to load related data like Trip
-                          .Include(b => b.PickupPoint)  // Optional: to load related data like PickupPoint
-                          .ToList();
+                          .Include(b => b.User)
+                          .Include(b => b.Trip)
+                          .Include(b => b.PickupPoint)
+                          .ToListAsync();
 
+            var recentTrips = await _context.Trips.Where(x => !x.IsDeleted)
+                .OrderByDescending(t => t.TripId)
+                .Take(6)
+                .Include(t => t.Package)
+                .ToListAsync();
 
-            var recentTrips = _context.Trips.Where(x => !x.IsDeleted)
-      .OrderByDescending(t => t.TripId)
-      .Take(6)
-      .Include(t => t.Package) // Include the navigation property only
-      .ToList();
-
-            ViewBag.RecentTrips = recentTrips;
-
-
+            ViewBag.RecentTrips    = recentTrips;
             ViewBag.RecentBookings = recentBookings;
-
-            // Passing both dashboard data and recent packages to the view
             ViewBag.RecentPackages = recentPackages;
 
             return View(dashData);

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AshtavinayakAPP.Models;
 using System.Collections.Generic;
@@ -8,16 +8,18 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace AshtavinayakAPP.Controllers
 {
-    [Authorize]
+    [Authorize]               // GET endpoints open to all authenticated users
     [Route("api/[controller]")]
     [ApiController]
     public class SeatController : ControllerBase
     {
         private readonly AshtvinayakTravelContext _context;
+        private readonly ILogger<SeatController> _logger;
 
-        public SeatController(AshtvinayakTravelContext context)
+        public SeatController(AshtvinayakTravelContext context, ILogger<SeatController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/Seats
@@ -45,7 +47,8 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (System.Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetSeats failed");
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
@@ -80,11 +83,13 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (System.Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetSeat failed for SeatId={SeatId}", id);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
         // POST: api/Seats
+        [Authorize(Roles = "Admin")] // MED-02
         [HttpPost]
         public async Task<ActionResult<object>> PostSeat([FromBody] Seat seat)
         {
@@ -111,11 +116,13 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (System.Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "PostSeat failed for PackageId={PackageId}", seat.PackageId);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
         // PUT: api/Seats/{id}
+        [Authorize(Roles = "Admin")] // MED-02
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSeat(int id, [FromBody] Seat seat)
         {
@@ -162,11 +169,13 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (System.Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "PutSeat failed for SeatId={SeatId}", id);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
         // DELETE: api/Seats/{id}
+        [Authorize(Roles = "Admin")] // MED-02
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSeat(int id)
         {
@@ -189,13 +198,15 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (System.Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "DeleteSeat failed for SeatId={SeatId}", id);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
         private bool SeatExists(int id)
         {
-            return _context.Seats.Any(s => s.SeatId == id);
+            return _context.Seats.Any(s => s.SeatId == id && !s.IsDeleted);
         }
     }
 }
+

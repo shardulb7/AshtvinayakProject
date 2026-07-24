@@ -1,0 +1,178 @@
+@model AshtavinayakAPP.Models.Package
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<link href="~/css/category/create.css" rel="stylesheet" />
+<!-- Include SweetAlert CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 60%;">
+
+        <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
+            <h4>Add Package</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+        </div>
+        <hr />
+
+        <form id="packageForm" asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group mb-2">
+                <label asp-for="PackageName" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="PackageName" class="form-control" required placeholder="Enter Package Name" />
+                <span asp-validation-for="PackageName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Duration" class="control-label"></label><span style="color: red;">*</span>
+                <input asp-for="Duration" class="form-control" required placeholder="e.g. 2 Nights / 3 Days" />
+                <span asp-validation-for="Duration" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="CityId" class="control-label"></label><span style="color: red;">*</span>
+                <select asp-for="CityId" class="form-control" asp-items="ViewBag.CityId" required>
+                    <option value="" disabled selected>Select City</option>
+                </select>
+                <span asp-validation-for="CityId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="CategoryId" class="control-label"></label><span style="color: red;">*</span>
+                <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId" required>
+                    <option value="" disabled selected>Select Category</option>
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="PkgPersonCount" class="control-label"></label>
+                <input asp-for="PkgPersonCount" type="number" min="0" class="form-control" placeholder="Max persons per package" />
+                <span asp-validation-for="PkgPersonCount" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2 form-check">
+                <input asp-for="IsCar" type="checkbox" class="form-check-input" id="isCarCheckbox" />
+                <label asp-for="IsCar" class="form-check-label"></label>
+            </div>
+
+            <div id="busFields">
+                <div class="form-group mb-2">
+                    <label asp-for="AdultPrice" class="control-label"></label>
+                    <input asp-for="AdultPrice" type="number" min="0" class="form-control" placeholder="Adult price" />
+                    <span asp-validation-for="AdultPrice" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-2">
+                    <label asp-for="Child3To8YrswithSeat" class="control-label"></label>
+                    <input asp-for="Child3To8YrswithSeat" type="number" min="0" class="form-control" placeholder="Child (3-8 yrs) with seat price" />
+                    <span asp-validation-for="Child3To8YrswithSeat" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-2">
+                    <label asp-for="Child3To8YrsWithoutSeat" class="control-label"></label>
+                    <input asp-for="Child3To8YrsWithoutSeat" type="number" min="0" class="form-control" placeholder="Child (3-8 yrs) without seat price" />
+                    <span asp-validation-for="Child3To8YrsWithoutSeat" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div id="carFields">
+                <div class="form-group mb-2">
+                    <label asp-for="CarType" class="control-label"></label>
+                    <input asp-for="CarType" class="form-control" placeholder="e.g. Innova / Ertiga" />
+                    <span asp-validation-for="CarType" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-2">
+                    <label asp-for="CarTotalSeat" class="control-label"></label>
+                    <input asp-for="CarTotalSeat" type="number" min="0" class="form-control" placeholder="Total seats in car" />
+                    <span asp-validation-for="CarTotalSeat" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-2">
+                    <label asp-for="CarPackagePrice" class="control-label"></label>
+                    <input asp-for="CarPackagePrice" type="number" min="0" class="form-control" placeholder="Total car package price" />
+                    <span asp-validation-for="CarPackagePrice" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Inclusions" class="control-label"></label>
+                <textarea asp-for="Inclusions" class="form-control" rows="2" placeholder="What's included"></textarea>
+                <span asp-validation-for="Inclusions" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Exclusions" class="control-label"></label>
+                <textarea asp-for="Exclusions" class="form-control" rows="2" placeholder="What's excluded"></textarea>
+                <span asp-validation-for="Exclusions" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Itinerary" class="control-label"></label>
+                <textarea asp-for="Itinerary" class="form-control" rows="3" placeholder="Day-wise itinerary"></textarea>
+                <span asp-validation-for="Itinerary" class="text-danger"></span>
+            </div>
+
+            <div class="form-group text-center">
+                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue">Create</button>
+                <button type="button" id="cancelButton" class="btn btn-secondaryN">Cancel</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    function toggleCarFields() {
+        var isCar = document.getElementById('isCarCheckbox').checked;
+        document.getElementById('carFields').style.display = isCar ? '' : 'none';
+        document.getElementById('busFields').style.display = isCar ? 'none' : '';
+    }
+
+    $(document).ready(function () {
+        toggleCarFields();
+        $('#isCarCheckbox').on('change', toggleCarFields);
+
+        $("#submitButton").click(function (e) {
+            e.preventDefault();
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to add this package?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, Add it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $("#packageForm").submit();
+                }
+            });
+        });
+
+        $("#cancelButton").click(function (e) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Your changes will be lost!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, Cancel!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '@Url.Action("Index", "Packages")';
+                }
+            });
+        });
+    });
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

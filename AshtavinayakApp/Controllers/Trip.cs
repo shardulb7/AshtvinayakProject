@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AshtavinayakAPP.Models;
 using System.Linq;
 using System.Threading.Tasks;
-using Mono.TextTemplating;
 using Microsoft.AspNetCore.Authorization;
 
 namespace AshtavinayakAPP.Controllers
@@ -14,10 +13,12 @@ namespace AshtavinayakAPP.Controllers
     public class TripController : ControllerBase
     {
         private readonly AshtvinayakTravelContext _context;
+        private readonly ILogger<TripController> _logger;
 
-        public TripController(AshtvinayakTravelContext context)
+        public TripController(AshtvinayakTravelContext context, ILogger<TripController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         
@@ -55,7 +56,8 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetTripsByPackage failed for PackageId={PackageId}", packageId);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
@@ -91,7 +93,8 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetAvailableSeats failed for TripId={TripId}", tripId);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
@@ -102,7 +105,8 @@ namespace AshtavinayakAPP.Controllers
             {
                 // Find the seat by SeatNumber
                 var seat = await _context.Seats
-                    .FirstOrDefaultAsync(s => s.SeatNumber == request.SeatNumber);
+                    .FirstOrDefaultAsync(s => s.SeatNumber == request.SeatNumber
+                                           && s.TripId == request.TripId); // HIGH-03: scope to correct trip
 
                 // Check if the seat exists
                 if (seat == null)
@@ -127,11 +131,12 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "UpdateSeatAvailability failed for SeatNumber={SeatNumber} TripId={TripId}", request.SeatNumber, request.TripId);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
-        
+
         [HttpGet("BookingSeats/{tripId}")]
         public async Task<IActionResult> GetBookingSeatsByTripId(int tripId)
         {
@@ -169,7 +174,8 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetBookingSeatsByTripId failed for TripId={TripId}", tripId);
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
@@ -198,16 +204,17 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (System.Exception ex)
             {
+                _logger.LogError(ex, "GetTrips failed");
                 return StatusCode(500, new
                 {
-                    Message = "Internal server error: " + ex.Message,
+                    Message = "An unexpected error occurred. Please try again.",
                 });
             }
         }
 
         private bool TripExists(int id)
         {
-            return _context.Trips.Any(e => e.TripId == id);
+            return _context.Trips.Any(e => e.TripId == id && !e.IsDeleted);
         }
     }
 }

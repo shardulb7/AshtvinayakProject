@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,12 +32,6 @@ namespace AshtavinayakAPP.Controllers
         }
 
 
-        // GET: TripRoutes
-        //public async Task<IActionResult> Index()
-        //{
-        //    var ashtvinayakTravelAppContext = _context.TripRoutes.Include(t => t.City).Include(t => t.Package);
-        //    return View(await ashtvinayakTravelAppContext.ToListAsync());
-        //}
 
         public async Task<IActionResult> Index(int page = 1)
         {
@@ -88,52 +82,11 @@ namespace AshtavinayakAPP.Controllers
             return View();
         }
 
-        // POST: TripRoutes/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Create([Bind("Trid,PackageId,PointName,Day,CityId")] TripRoute tripRoute)
-        //{
-        //    if (ModelState.IsValid)
-        //    {
-        //        _context.Add(tripRoute);
-        //        await _context.SaveChangesAsync();
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    ViewData["CityId"] = new SelectList(_context.Cities, "CityId", "CityName", tripRoute.CityId);
-        //    ViewData["PackageId"] = new SelectList(_context.Packages, "PackageId", "PackageName", tripRoute.PackageId);
-        //    return View(tripRoute);
-        //}
 
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Create(string PointNames, [Bind("Trid,PackageId,Day,CityId")] TripRoute tripRoute)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        ViewData["CityId"] = new SelectList(_context.Cities, "CityId", "CityName", tripRoute.CityId);
-        //        ViewData["PackageId"] = new SelectList(_context.Packages, "PackageId", "PackageName", tripRoute.PackageId);
-        //        return View(tripRoute);
-        //    }
 
-        //    if (string.IsNullOrEmpty(PointNames))
-        //    {
-        //        ModelState.AddModelError("PointNames", "Pickup points are required.");
-        //        return View(tripRoute);
-        //    }
 
         //    var pickupPoints = PointNames.Split('|', StringSplitOptions.RemoveEmptyEntries);
 
-        //    foreach (var point in pickupPoints)
-        //    {
-        //        var newTripRoute = new TripRoute
-        //        {
-        //            CityId = tripRoute.CityId,
-        //            PackageId = tripRoute.PackageId,
-        //            Day = tripRoute.Day,
-        //            PointName = point.Trim()
-        //        };
 
         //        _context.TripRoutes.Add(newTripRoute);
         //    }
@@ -189,60 +142,9 @@ namespace AshtavinayakAPP.Controllers
 
 
 
-        // GET: TripRoutes/Edit/5
-        //public async Task<IActionResult> Edit(int? id)
-        //{
-        //    if (id == null)
-        //    {
-        //        return NotFound();
-        //    }
 
-        //    var tripRoute = await _context.TripRoutes.FindAsync(id);
-        //    if (tripRoute == null)
-        //    {
-        //        return NotFound();
-        //    }
-        //    ViewData["CityId"] = new SelectList(_context.Cities, "CityId", "CityName", tripRoute.CityId);
-        //    ViewData["PackageId"] = new SelectList(_context.Packages, "PackageId", "PackageName", tripRoute.PackageId);
-        //    return View(tripRoute);
-        //}
 
-        // POST: TripRoutes/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Edit(int id, [Bind("Trid,PackageId,PointName,Day,CityId")] TripRoute tripRoute)
-        //{
-        //    if (id != tripRoute.Trid)
-        //    {
-        //        return NotFound();
-        //    }
 
-        //    if (ModelState.IsValid)
-        //    {
-        //        try
-        //        {
-        //            _context.Update(tripRoute);
-        //            await _context.SaveChangesAsync();
-        //        }
-        //        catch (DbUpdateConcurrencyException)
-        //        {
-        //            if (!TripRouteExists(tripRoute.Trid))
-        //            {
-        //                return NotFound();
-        //            }
-        //            else
-        //            {
-        //                throw;
-        //            }
-        //        }
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    ViewData["CityId"] = new SelectList(_context.Cities, "CityId", "CityName", tripRoute.CityId);
-        //    ViewData["PackageId"] = new SelectList(_context.Packages, "PackageId", "PackageName", tripRoute.PackageId);
-        //    return View(tripRoute);
-        //}
 
         public async Task<IActionResult> Edit(int? id)
         {
@@ -348,7 +250,8 @@ namespace AshtavinayakAPP.Controllers
 
         private bool TripRouteExists(int id)
         {
-            return _context.TripRoutes.Any(e => e.Trid == id);
+            return _context.TripRoutes.Any(e => e.Trid == id && !e.IsDeleted);
         }
     }
 }
+

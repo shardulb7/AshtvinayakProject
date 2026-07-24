@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -121,8 +121,8 @@ namespace AshtavinayakAPP.Controllers
             {
                 return NotFound();
             }
-            ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName", trip.TripId);
-            ViewData["CategoryId"] = new SelectList(_context.Categories.Where(x => !x.IsDeleted), "CategoryId", "CategoryName", trip.TripId);
+            ViewData["PackageId"]  = new SelectList(_context.Packages.Where(x => !x.IsDeleted),    "PackageId",  "PackageName",  trip.PackageId);   // HIGH-06: was trip.TripId
+            ViewData["CategoryId"] = new SelectList(_context.Categories.Where(x => !x.IsDeleted),  "CategoryId", "CategoryName", trip.CategoryId);  // HIGH-06: was trip.TripId
 
 
             return View(trip);
@@ -204,7 +204,7 @@ namespace AshtavinayakAPP.Controllers
 
         private bool TripExists(int id)
         {
-            return _context.Trips.Any(e => e.TripId == id);
+            return _context.Trips.Any(e => e.TripId == id && !e.IsDeleted);
         }
     }
 }

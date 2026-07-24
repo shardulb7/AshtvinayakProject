@@ -205,7 +205,7 @@ namespace AshtavinayakAPP.Controllers
 
         private bool NotificationExists(int id)
         {
-            return _context.Notifications.Any(e => e.NotificationId == id);
+            return _context.Notifications.Any(e => e.NotificationId == id && !e.IsDeleted);
         }
     }
 }

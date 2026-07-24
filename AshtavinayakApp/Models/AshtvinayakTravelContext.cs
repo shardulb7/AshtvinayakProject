@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +15,8 @@ public partial class AshtvinayakTravelContext : DbContext
     {
     }
 
+    public virtual DbSet<Agent> Agents { get; set; }
+
     public virtual DbSet<Booking> Bookings { get; set; }
 
     public virtual DbSet<BookingSeat> BookingSeats { get; set; }
@@ -22,6 +24,8 @@ public partial class AshtvinayakTravelContext : DbContext
     public virtual DbSet<Category> Categories { get; set; }
 
     public virtual DbSet<City> Cities { get; set; }
+
+    public virtual DbSet<CommissionSetting> CommissionSettings { get; set; }
 
     public virtual DbSet<DropUp> DropUps { get; set; }
 
@@ -49,12 +53,65 @@ public partial class AshtvinayakTravelContext : DbContext
 
     public virtual DbSet<Vehicle> Vehicles { get; set; }
 
+    /// <summary>
+    /// Design-time fallback only. This method is called by EF Core tooling (migrations, scaffolding)
+    /// when no DbContextOptions are provided via Dependency Injection.
+    ///
+    /// At runtime, <see cref="Program"/> always provides the connection string through DI
+    /// via <c>builder.Services.AddDbContext</c>, so <c>optionsBuilder.IsConfigured</c>
+    /// is always <c>true</c> and this block is NEVER entered during normal application execution.
+    ///
+    /// The fallback targets a safe local SQL Server instance and must NOT point to any
+    /// production server. Sensitive credentials must always be stored in environment
+    /// variables or a secrets manager, not in source code.
+    /// </summary>
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=SQL9001.site4now.net;Initial Catalog=db_aafa7e_ashtavinayak;User Id=db_aafa7e_ashtavinayak_admin;Password=Yogesh@45");
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            // Safe local development fallback — used ONLY by EF Core design-time tools.
+            // Production connection string must be supplied via the environment variable:
+            //   ConnectionStrings__DefaultConnection
+            optionsBuilder.UseSqlServer(
+                "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=AshtvinayakTravelApp;Integrated Security=True;TrustServerCertificate=True",
+                sqlOptions => sqlOptions.CommandTimeout(60));
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Agent>(entity =>
+        {
+            entity.HasKey(e => e.AgentId);
+
+            entity.HasIndex(e => e.MobileNumber, "UQ_Agents_MobileNumber").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ_Agents_Email").IsUnique();
+
+            entity.Property(e => e.FullName).HasMaxLength(150);
+            entity.Property(e => e.BusinessName).HasMaxLength(150);
+            entity.Property(e => e.MobileNumber).HasMaxLength(15);
+            entity.Property(e => e.Email).HasMaxLength(100);
+            entity.Property(e => e.Address).HasMaxLength(500);
+            entity.Property(e => e.PasswordHash).HasMaxLength(255);
+            entity.Property(e => e.AadhaarDocumentPath).HasMaxLength(500);
+            entity.Property(e => e.ShopActLicenseDocumentPath).HasMaxLength(500);
+            entity.Property(e => e.UdyamCertificatePath).HasMaxLength(500);
+            entity.Property(e => e.ApprovalStatus)
+                .HasMaxLength(50)
+                .HasDefaultValue("Pending");
+            entity.Property(e => e.RejectionRemarks).HasMaxLength(1000);
+            entity.Property(e => e.CommissionPercentage).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+        });
+
+        modelBuilder.Entity<CommissionSetting>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.DefaultCommissionPercentage).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())");
+        });
+
         modelBuilder.Entity<Booking>(entity =>
         {
             entity.HasKey(e => e.BookingId).HasName("PK_Bookings_73951ACD69F68546");
@@ -77,6 +134,8 @@ public partial class AshtvinayakTravelContext : DbContext
             entity.Property(e => e.TotalPayment).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.TripId).HasColumnName("TripID");
             entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.Property(e => e.CommissionPercentage).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.CommissionAmount).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.Trip).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.TripId)
@@ -85,6 +144,10 @@ public partial class AshtvinayakTravelContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_Bookings_Users");
+
+            entity.HasOne(d => d.Agent).WithMany(p => p.Bookings)
+                .HasForeignKey(d => d.AgentId)
+                .HasConstraintName("FK_Bookings_Agents");
         });
 
         modelBuilder.Entity<BookingSeat>(entity =>
@@ -106,6 +169,17 @@ public partial class AshtvinayakTravelContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.BookingSeats)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_BookingSeats_Bookings");
+
+            // MED-10: DB-level guard against double-booking the same seat on the same trip.
+            // The application-level check in BookingService is a courtesy for a fast error
+            // message; this filtered unique index is what actually prevents the race condition
+            // under concurrent requests (a duplicate insert now fails at the DB, not silently
+            // succeeds). Filtered to active rows only, so a seat freed by a soft-deleted
+            // booking-seat can be rebooked.
+            entity.HasIndex(e => new { e.TripId, e.SeatNumber })
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0 AND [TripID] IS NOT NULL AND [SeatNumber] IS NOT NULL")
+                .HasDatabaseName("UQ_BookingSeats_TripId_SeatNumber_Active");
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -232,7 +306,7 @@ public partial class AshtvinayakTravelContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.Notifications)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_Notifications_Trips");
+                .HasConstraintName("FK_Notifications_Users"); // LOW-06: was incorrectly named FK_Notifications_Trips
 
             entity.HasOne(d => d.Vehicle).WithMany(p => p.Notifications)
                 .HasForeignKey(d => d.VehicleId)

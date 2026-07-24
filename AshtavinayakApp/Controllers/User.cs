@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AshtavinayakAPP.Models;
-using Microsoft.CodeAnalysis.Scripting;
+using AshtavinayakAPP.Services.SmsService;
 using Microsoft.IdentityModel.Tokens;
 using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
@@ -23,14 +24,19 @@ namespace AshtavinayakAPP.Controllers
     {
         private readonly AshtvinayakTravelContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ISmsService _smsService;
+        private readonly ILogger<UserController> _logger; // LOW-08
+        private readonly IWebHostEnvironment _env;
         private static readonly ConcurrentDictionary<string, (string Otp, DateTime Expiry)> _otpStorage = new();
 
-
-
-        public UserController(AshtvinayakTravelContext context, IConfiguration configuration)
+        public UserController(AshtvinayakTravelContext context, IConfiguration configuration,
+            ISmsService smsService, ILogger<UserController> logger, IWebHostEnvironment env)
         {
-            _context = context;
+            _context       = context;
             _configuration = configuration;
+            _smsService    = smsService;
+            _logger        = logger; // LOW-08
+            _env           = env;
         }
 
         // POST: api/Users/Register
@@ -82,15 +88,24 @@ namespace AshtavinayakAPP.Controllers
                 return NotFound("This mobile number is not registered. Please register first.");
             }
 
-            // Generate a random OTP (6-digit)
-            var otp = new Random().Next(100000, 999999).ToString();
+            // MED-07: Use cryptographically secure RNG — System.Random is predictable
+            var otp = System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999).ToString();
             var otpExpiry = DateTime.UtcNow.AddMinutes(5); // OTP expires after 5 minutes
 
             // Store OTP temporarily with expiry
             _otpStorage[mobileNoRequest.MobileNo] = (otp.ToString(), otpExpiry);
 
-            var message = $"Welcome to iTas Tourism Your OTP for Ashtavinayak Yatra is {otp}. It is valid for 10 minutes. Do not share this with anyone.";
-            var isSent = await SendSmsAsync(mobileNoRequest.MobileNo, message);
+            var message = $"Welcome to iTas Tourism Your OTP for Ashtavinayak Yatra is {otp}. It is valid for 5 minutes. Do not share this with anyone.";
+            var otpTemplateId = _configuration["SmsGateway:OtpTemplateId"] ?? string.Empty;
+            var isSent = await _smsService.SendAsync(mobileNoRequest.MobileNo, message, otpTemplateId);
+
+            // DEV-ONLY: echo the OTP back in the response so the flow is testable without a live
+            // SMS gateway. Gated on IsDevelopment() — never happens in Production, and the OTP is
+            // still never written to logs (see VerifyOTP).
+            if (_env.IsDevelopment())
+            {
+                return Ok(new { Message = "OTP sent successfully to your mobile.", DevOnlyOtp = otp });
+            }
 
             return Ok(new { Message = "OTP sent successfully to your mobile." });
         }
@@ -109,8 +124,8 @@ namespace AshtavinayakAPP.Controllers
                 return BadRequest("Invalid OTP or OTP expired.");
             }
 
-            Console.WriteLine($"Stored OTP: {storedOtp.Otp}, Expiry: {storedOtp.Expiry}");
-            Console.WriteLine($"Received OTP: {otpRequest.OTP}");
+            // LOW-08: use LogDebug — disabled in Production (log level Warning) to prevent OTP leakage in logs
+            _logger.LogDebug("OTP verification attempt for {Mobile} — expiry {Expiry}", otpRequest.MobileNo, storedOtp.Expiry);
 
             // Check OTP expiry
             if (storedOtp.Expiry < DateTime.UtcNow)
@@ -153,19 +168,13 @@ namespace AshtavinayakAPP.Controllers
             });
         }
 
-        // Generate a 6-digit OTP
-        private string GenerateRandomOtp()
-        {
-            var random = new Random();
-            return random.Next(100000, 999999).ToString(); // Ensures a 6-digit OTP
-        }
 
-        // Generate JWT Token
         private string GenerateJwtToken(User user)
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]));
-
+            var jwtSettings  = _configuration.GetSection("JwtSettings");
+            var secretKey    = jwtSettings["SecretKey"]
+                ?? throw new InvalidOperationException("JWT SecretKey is not configured.");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var claims = new[]
             {
         new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
@@ -181,39 +190,13 @@ namespace AshtavinayakAPP.Controllers
                 issuer: jwtSettings["Issuer"],
                 audience: jwtSettings["Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(365),
+                expires: DateTime.UtcNow.AddHours(24), // MED-08: was AddDays(365) — short-lived tokens limit blast radius
                 signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        private async Task<bool> SendSmsAsync(string phoneNumber, string message)
-        {
-            try
-            {
-                using (var client = new HttpClient())
-                {
-                    string baseUrl = "http://bulksmspune.mobi/sendurlcomma.aspx";
-                    string encodedMessage = Uri.EscapeDataString(message);
-
-                    string url = $"{baseUrl}?user=iTasT&pwd=Akshay@7995&senderid=ITAST&CountryCode=91" +
-                                 $"&mobileno={phoneNumber}&msgtext={message}" +
-                                 $"&pe_id=1701174522321104846&template_id=1707174737464547708";
-                    var response = await client.GetAsync(url);
-                    string responseContent = await response.Content.ReadAsStringAsync();
-
-                    Console.WriteLine($"SMS API Response: {responseContent}");
-
-                    return response.IsSuccessStatusCode;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception while sending SMS: {ex.Message}");
-                return false;
-            }
-        }
     }
 
     public class MobileNoRequest

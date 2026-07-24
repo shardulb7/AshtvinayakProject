@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,15 +7,18 @@ using AshtavinayakAPP.Models;
 
 namespace AshtavinayakAPP.Controllers
 {
+    [Authorize(Roles = "Admin")]                  // CRIT-15: protect all dashboard endpoints
     [Route("api/[controller]")]
     [ApiController]
     public class DashdataController : ControllerBase
     {
         private readonly AshtvinayakTravelContext _context;
+        private readonly ILogger<DashdataController> _logger;
 
-        public DashdataController(AshtvinayakTravelContext context)
+        public DashdataController(AshtvinayakTravelContext context, ILogger<DashdataController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/Dashboard
@@ -58,8 +62,8 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                // Handle any errors that might occur during data fetching
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetRecentPackages failed");
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
@@ -80,9 +84,9 @@ namespace AshtavinayakAPP.Controllers
                     {
                         BookingId = b.BookingId,
                         BookingDate = b.BookingDate,
-                        UserName = b.User.UserName,  // Assuming `User` has a `Name` property
-                        Tridate = b.Trip.TripDate,  // Assuming `Trip` has a `Destination` property
-                        Status = b.Status // Assuming `PickupPoint` has a `Location` property
+                        UserName  = b.User != null ? b.User.UserName : null,    // CS8602 guard
+                        Tridate   = b.Trip != null ? (DateTime?)b.Trip.TripDate : null,    // CS8602 guard
+                        Status    = b.Status
 
                     })
                     .ToListAsync();  // Asynchronous call to fetch the data
@@ -92,8 +96,8 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                // Handle any errors that might occur during data fetching
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetRecentBookings failed");
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
@@ -115,7 +119,7 @@ namespace AshtavinayakAPP.Controllers
                         TripId = t.TripId,
                         Tripdate=t.TripDate,
                         TotalSeats = t.TotalSeats,  // Assuming Trip has a Name property
-                        PackageName = t.Package.PackageName,
+                        PackageName = t.Package != null ? t.Package.PackageName : null, // CS8602 guard
                         AvalaibleSeats = t.AvailableSeats
                         // Assuming Package has a Name property
                     })
@@ -126,11 +130,12 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                // Handle any errors that might occur during data fetching
-                return StatusCode(500, "Internal server error: " + ex.Message);
+                _logger.LogError(ex, "GetRecentTrips failed");
+                return StatusCode(500, "An unexpected error occurred. Please try again.");
             }
         }
 
 
     }
 }
+

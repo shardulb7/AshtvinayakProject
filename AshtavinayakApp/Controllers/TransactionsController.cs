@@ -203,7 +203,7 @@ namespace AshtavinayakAPP.Controllers
 
         private bool TransactionExists(int id)
         {
-            return _context.Transactions.Any(e => e.TransactionId == id);
+            return _context.Transactions.Any(e => e.TransactionId == id && !e.IsDeleted);
         }
     }
 }

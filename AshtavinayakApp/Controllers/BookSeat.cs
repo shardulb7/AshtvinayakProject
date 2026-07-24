@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AshtavinayakAPP.Models;
 using System.Collections.Generic;
@@ -15,11 +15,12 @@ namespace AshtavinayakAPP.Controllers
     public class BookingSeatController : ControllerBase
     {
         private readonly AshtvinayakTravelContext _context;
+        private readonly ILogger<BookingSeatController> _logger;
 
-        public BookingSeatController(AshtvinayakTravelContext context)
+        public BookingSeatController(AshtvinayakTravelContext context, ILogger<BookingSeatController> logger)
         {
             _context = context;
-            ;
+            _logger = logger;
         }
 
 
@@ -51,10 +52,10 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "GetBookedSeatsByTrip failed for TripId={TripId}", tripId);
                 return StatusCode(500, new
                 {
-                    Message = "Internal server error",
-                    Error = ex.Message
+                    Message = "An unexpected error occurred. Please try again."
                 });
             }
         }
@@ -73,77 +74,22 @@ namespace AshtavinayakAPP.Controllers
 
 
 
+        /// <summary>
+        /// ⚠️ DEPRECATED (HIGH-12) — Use POST /api/Booking/CreateBookingWithSeats instead.
+        /// This endpoint has been superseded by the canonical booking flow which includes:
+        /// SMS confirmation, Transaction record, BookingCode, and seat availability update.
+        /// This endpoint will be removed in a future release.
+        /// </summary>
         [HttpPost("BookSeats")]
-        public async Task<ActionResult> BookSeats([FromBody] BookingRequestDto request)
+        [Obsolete("Use POST /api/Booking/CreateBookingWithSeats. This endpoint will be removed.")]
+        public IActionResult BookSeats([FromBody] BookingRequestDto request)
         {
-            using (var transaction = await _context.Database.BeginTransactionAsync())
+            return StatusCode(410, new
             {
-                try
-                {
-                    // *Step 1: Validate Selected Seats*
-                    var seats = await _context.Seats
-                        .Where(s => request.SeatNumbers.Contains(s.SeatNumber) && s.TripId == request.TripId && s.IsAvailable)
-                        .ToListAsync();
-
-                    if (seats.Count != request.SeatNumbers.Count)
-                    {
-                        return BadRequest("Some seats are already booked or unavailable.");
-                    }
-
-                    // *Step 2: Create Booking Record*
-                    var booking = new Booking
-                    {
-                        UserId = request.UserId,
-                        TripId = request.TripId,
-                        PickupPointId = request.PickupPointId,
-                        BookingDate = DateTime.UtcNow,
-                        Status = "Confirmed",
-                        TotalPayment = request.TotalPayment,
-                        Advance = request.Advance,
-                        BookingCode = Guid.NewGuid().ToString()
-                    };
-
-                    _context.Bookings.Add(booking);
-                    await _context.SaveChangesAsync(); // ✅ Now we have booking.BookingId
-
-                    // *Step 3: Save BookingSeats*
-                    var bookingSeats = request.SeatNumbers.Select(seatNumber => new BookingSeat
-                    {
-                        BookingId = booking.BookingId, // ✅ Assign the generated BookingId
-                        SeatNumber = seatNumber,
-                        Adults = request.Adults,
-                        Childwithseat = request.Childwithseat,
-                        Childwithoutseat = request.Childwithoutseat,
-                        TripId = request.TripId,
-                        UserId = request.UserId,
-                    }).ToList();
-
-                    _context.BookingSeats.AddRange(bookingSeats);
-                    await _context.SaveChangesAsync();
-
-                    // *Step 4: Mark Selected Seats as Unavailable*
-                    foreach (var seat in seats)
-                    {
-                        seat.IsAvailable = false;
-                    }
-                    await _context.SaveChangesAsync(); // ✅ Update seat availability
-
-                    // *Step 5: Commit Transaction*
-                    await transaction.CommitAsync();
-
-                    return Ok(new
-                    {
-                        Message = "Booking successful!",
-                        BookingId = booking.BookingId,
-                        BookingSeats = bookingSeats
-                    });
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    return StatusCode(500, new { Message = "Internal server error", Error = ex.Message });
-                }
-            }
+                Message      = "This endpoint is deprecated. Please migrate to POST /api/Booking/CreateBookingWithSeats.",
+                DeprecatedAt = "2026-07-23",
+                NewEndpoint  = "POST /api/Booking/CreateBookingWithSeats"
+            });
         }
 
     }

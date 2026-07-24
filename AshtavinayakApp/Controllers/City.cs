@@ -28,7 +28,7 @@ namespace AshtavinayakAPP.Controllers
         }
         private bool CityExists(int id)
         {
-            return _context.Cities.Any(e => e.CityId == id);
+            return _context.Cities.Any(e => e.CityId == id && !e.IsDeleted);
         }
     }
 }

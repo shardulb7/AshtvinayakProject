@@ -100,7 +100,7 @@ namespace AshtavinayakAPP.Controllers
 
             // Update the SelectList to display PackageName instead of PackageId
             ViewData["PackageId"] = new SelectList(
-                _context.Packages,
+                _context.Packages.Where(x => !x.IsDeleted),
                 "PackageId",
                 "PackageName", // Use "PackageName" as the display text
                 seat.PackageId
@@ -191,7 +191,7 @@ namespace AshtavinayakAPP.Controllers
 
         private bool SeatExists(int id)
         {
-            return _context.Seats.Any(e => e.SeatId == id);
+            return _context.Seats.Any(e => e.SeatId == id && !e.IsDeleted);
         }
     }
 }
