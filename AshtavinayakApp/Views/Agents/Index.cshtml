@@ -1,0 +1,91 @@
+@model IEnumerable<AshtavinayakAPP.Models.Agent>
+
+@{
+    ViewData["Title"] = "Agent Index";
+}
+
+<link href="~/CSS/Category/index.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<div class="d-flex justify-content-between align-items-center w-100">
+    <h2>Agent List</h2>
+    <div class="lefticons d-flex align-items-center">
+        <form method="get" asp-action="Index" class="d-flex align-items-center">
+            <select name="status" class="form-control" style="width: 180px; margin-right: 5px;" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                <option value="Pending" selected="@(ViewData["StatusFilter"] as string == "Pending")">Pending</option>
+                <option value="Approved" selected="@(ViewData["StatusFilter"] as string == "Approved")">Approved</option>
+                <option value="Rejected" selected="@(ViewData["StatusFilter"] as string == "Rejected")">Rejected</option>
+            </select>
+        </form>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="table" id="agentTable">
+        <thead>
+            <tr>
+                <th>Serial No</th>
+                <th>@Html.DisplayNameFor(model => model.FullName)</th>
+                <th>@Html.DisplayNameFor(model => model.BusinessName)</th>
+                <th>@Html.DisplayNameFor(model => model.MobileNumber)</th>
+                <th>@Html.DisplayNameFor(model => model.Email)</th>
+                <th>Approval Status</th>
+                <th>Active</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int serialNumber = 1;
+            }
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@serialNumber</td>
+                    <td>@Html.DisplayFor(modelItem => item.FullName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.BusinessName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.MobileNumber)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                    <td>
+                        @{
+                            var badgeClass = item.ApprovalStatus switch
+                            {
+                                "Approved" => "badge bg-success",
+                                "Rejected" => "badge bg-danger",
+                                _ => "badge bg-warning text-dark"
+                            };
+                        }
+                        <span class="@badgeClass">@item.ApprovalStatus</span>
+                    </td>
+                    <td>@(item.IsActive ? "Yes" : "No")</td>
+                    <td>
+                        <a href='@Url.Action("Details", new { id = item.AgentId })'>
+                            <img src='~/images/investigation_1723432.png' alt='Details' style='width: 25px; height: 25px;' />
+                        </a>
+                    </td>
+                </tr>
+                {
+                    serialNumber++;
+                }
+            }
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        @if (ViewData["CurrentPage"] != null && (int)ViewData["CurrentPage"] > 1)
+        {
+            <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] - 1, status = ViewData["StatusFilter"] })">Previous</a>
+        }
+
+        @for (int i = 1; i <= (int)ViewData["TotalPages"]; i++)
+        {
+            <a href="@Url.Action("Index", new { page = i, status = ViewData["StatusFilter"] })" class="@(i == (int)ViewData["CurrentPage"] ? "active" : "")">@i</a>
+        }
+
+        @if (ViewData["CurrentPage"] != null && (int)ViewData["CurrentPage"] < (int)ViewData["TotalPages"])
+        {
+            <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] + 1, status = ViewData["StatusFilter"] })">Next</a>
+        }
+    </div>
+</div>
