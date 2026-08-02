@@ -9,7 +9,9 @@ using AshtavinayakAPP.Services.PackageService;
 using AshtavinayakAPP.Services.RazorPay;
 using AshtavinayakAPP.Services.SmsService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -43,15 +45,23 @@ builder.Services.AddScoped<IDocumentStorageService, DocumentStorageService>();
 builder.Services.AddScoped<IAgentService, AgentService>();
 builder.Services.AddHttpClient("SmsGateway");
 
-// Validate document-storage config at startup — fail fast with a clear error if missing.
-// In Development: set in appsettings.Development.json → DocumentStorage:RootPath
-// In Production:  set the environment variable DocumentStorage__RootPath
+// Document storage root — where agent-uploaded KYC documents (Aadhaar, Shop Act License,
+// Udyam Certificate) are saved. Deliberately kept outside wwwroot: these are private ID/
+// business documents and must never be reachable by a public URL, only through the
+// authenticated admin download action. DocumentStorage:RootPath is optional — if it isn't
+// set, this defaults to an App_Data folder next to the app. App_Data is a long-standing
+// ASP.NET convention that hosting platforms (including IIS) never serve as static files,
+// unlike wwwroot — so a plain deployment works with zero extra configuration while staying
+// just as private. Set DocumentStorage__RootPath explicitly only if you want documents on a
+// specific volume/mount instead of next to the app.
 var documentStorageRootPath = builder.Configuration["DocumentStorage:RootPath"];
 if (string.IsNullOrWhiteSpace(documentStorageRootPath))
-    throw new InvalidOperationException(
-        "Document storage root path 'DocumentStorage:RootPath' is not configured. " +
-        "In Development, set it in appsettings.Development.json. " +
-        "In Production, set the environment variable 'DocumentStorage__RootPath'.");
+{
+    documentStorageRootPath = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "documents");
+    Directory.CreateDirectory(documentStorageRootPath);
+    builder.Configuration["DocumentStorage:RootPath"] = documentStorageRootPath;
+    Log.Information("DocumentStorage:RootPath not configured — defaulting to {DefaultPath} (private, outside wwwroot).", documentStorageRootPath);
+}
 
 // Agent login is the first password-based, self-registered, publicly-reachable login in this
 // app (every other login is OTP-based or the single non-self-serve Admin account) — rate-limit it.
@@ -86,6 +96,16 @@ builder.Services.AddCors(options =>
                   .AllowAnyHeader();
     });
 });
+
+// Not fatal (a mobile-only client has no browser origin to restrict), but silently allowing
+// any origin is worth calling out loudly outside Development rather than only in DEPLOYMENT.md.
+if (allowedOrigins.Length == 0 && !builder.Environment.IsDevelopment())
+{
+    Log.Warning(
+        "Cors:AllowedOrigins is not configured — CORS is falling back to allow-any-origin. " +
+        "If a browser-based frontend calls this API directly, set Cors__AllowedOrigins__0 " +
+        "(and __1, etc.) to its real domain(s) before relying on this in production.");
+}
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -207,16 +227,68 @@ builder.Services.AddHealthChecks()
 builder.Services.AddHttpContextAccessor();
 
 
-builder.Services.AddDistributedMemoryCache();
+// Data Protection keys encrypt the session cookie (and anti-forgery tokens). Left at its
+// default, the key ring lives under the OS user profile — on every restart/redeploy on a
+// fresh container, or under a different account, the keys are lost and every logged-in
+// admin session silently breaks. Persisting to a configurable, stable path fixes that for
+// a single persistent instance. DataProtection:KeysPath is optional; defaults to a folder
+// under the app's own content root. Scaling to more than one instance additionally requires
+// this path to be shared/persistent storage reachable by every instance.
+var dataProtectionKeysPath = builder.Configuration["DataProtection:KeysPath"];
+var keysDirectory = string.IsNullOrWhiteSpace(dataProtectionKeysPath)
+    ? Path.Combine(builder.Environment.ContentRootPath, "keys")
+    : dataProtectionKeysPath;
+builder.Services.AddDataProtection()
+    .SetApplicationName("AshtavinayakApp")
+    .PersistKeysToFileSystem(new DirectoryInfo(keysDirectory));
+
+// The admin panel's login session is stored via this cache. AddDistributedMemoryCache (the
+// default) lives entirely in-process — every restart/redeploy silently logs every admin out,
+// and a second instance behind a load balancer wouldn't see sessions created on the first.
+// Backing it with the same SQL Server the app already depends on fixes both, with no new
+// infrastructure to provision. The required table is created idempotently below.
+builder.Services.AddDistributedSqlServerCache(options =>
+{
+    options.ConnectionString = connectionString;
+    options.SchemaName = "dbo";
+    options.TableName = "SessionCache";
+});
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30); // Session timeout
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
 });
 
 // Build the app
 var app = builder.Build();
+
+// Create the SQL-backed session cache table if it doesn't exist yet — idempotent, safe on
+// every restart. Schema matches what AddDistributedSqlServerCache/Microsoft.Extensions.Caching.SqlServer
+// expects (the same table `dotnet sql-cache create` would generate).
+await using (var cacheTableConnection = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+{
+    await cacheTableConnection.OpenAsync();
+    await using var cacheTableCommand = cacheTableConnection.CreateCommand();
+    cacheTableCommand.CommandText = """
+        IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'SessionCache' AND schema_id = SCHEMA_ID('dbo'))
+        BEGIN
+            CREATE TABLE [dbo].[SessionCache] (
+                [Id] NVARCHAR(449) NOT NULL,
+                [Value] VARBINARY(MAX) NOT NULL,
+                [ExpiresAtTime] DATETIMEOFFSET(7) NOT NULL,
+                [SlidingExpirationInSeconds] BIGINT NULL,
+                [AbsoluteExpiration] DATETIMEOFFSET(7) NULL,
+                CONSTRAINT [PK_SessionCache] PRIMARY KEY CLUSTERED ([Id] ASC)
+            );
+            CREATE NONCLUSTERED INDEX [Index_SessionCache_ExpiresAtTime] ON [dbo].[SessionCache]([ExpiresAtTime]);
+        END
+        """;
+    await cacheTableCommand.ExecuteNonQueryAsync();
+}
 
 // Seed reference data on startup — idempotent, safe on every restart.
 // Exceptions are caught inside SeedAsync; the app continues even if seeding fails.

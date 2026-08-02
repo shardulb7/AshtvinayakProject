@@ -351,6 +351,15 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 
+# Data Protection key ring (persisted session/cookie encryption keys) — local fallback path
+# when DataProtection:KeysPath isn't set. Never commit real key material.
+AshtavinayakApp/keys/
+keys/
+
+# Agent document uploads — local fallback path when DocumentStorage:RootPath isn't set.
+# Never commit real uploaded documents (Aadhaar/Shop Act/Udyam are private KYC files).
+AshtavinayakApp/App_Data/
+
 # Backup folder for Package Reference Convert tool in Visual Studio 2017
 MigrationBackup/
 

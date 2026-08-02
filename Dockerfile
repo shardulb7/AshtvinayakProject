@@ -20,6 +20,12 @@ WORKDIR /app
 # documents survive container restarts/redeploys (see DEPLOYMENT.md's callout on this).
 RUN mkdir -p /app/data/documents
 ENV DocumentStorage__RootPath=/app/data/documents
+
+# Data Protection key ring — encrypts the admin panel's session cookie. Mount a volume
+# here too, otherwise every container restart invalidates every logged-in admin session.
+RUN mkdir -p /app/data/keys
+ENV DataProtection__KeysPath=/app/data/keys
+
 ENV ASPNETCORE_HTTP_PORTS=8080
 
 COPY --from=build /app/publish .
