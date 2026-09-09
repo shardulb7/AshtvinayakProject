@@ -266,6 +266,25 @@ builder.Services.AddSession(options =>
 // Build the app
 var app = builder.Build();
 
+// AUTO-MIGRATE: Apply any pending EF Core migrations on startup.
+// This is idempotent — safe to run on every restart. It creates the schema on a fresh
+// Azure SQL Database and applies any new migrations after deploys automatically.
+// Exceptions are logged and re-thrown so the app fails fast with a clear error if the DB
+// is unreachable or the migration fails (rather than silently starting broken).
+try
+{
+    using var migrationScope = app.Services.CreateScope();
+    var dbContext = migrationScope.ServiceProvider.GetRequiredService<AshtvinayakTravelContext>();
+    Log.Information("Applying EF Core migrations...");
+    await dbContext.Database.MigrateAsync();
+    Log.Information("EF Core migrations applied successfully.");
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Failed to apply EF Core migrations. The application cannot start.");
+    throw;
+}
+
 // Create the SQL-backed session cache table if it doesn't exist yet — idempotent, safe on
 // every restart. Schema matches what AddDistributedSqlServerCache/Microsoft.Extensions.Caching.SqlServer
 // expects (the same table `dotnet sql-cache create` would generate).
