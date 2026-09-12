@@ -99,6 +99,13 @@ namespace AshtavinayakAPP.Controllers
             var otpTemplateId = _configuration["SmsGateway:OtpTemplateId"] ?? string.Empty;
             var isSent = await _smsService.SendAsync(mobileNoRequest.MobileNo, message, otpTemplateId);
 
+            if (!isSent)
+            {
+                // Log the failure but still allow OTP verification — the OTP is stored in memory
+                // and the user can retry. Do not expose SMS failure to the caller (security).
+                _logger.LogWarning("[OTP] SMS delivery failed for {Phone}. Gateway returned failure.", mobileNoRequest.MobileNo);
+            }
+
             // DEV-ONLY: echo the OTP back in the response so the flow is testable without a live
             // SMS gateway. Gated on IsDevelopment() — never happens in Production, and the OTP is
             // still never written to logs (see VerifyOTP).
@@ -169,6 +176,46 @@ namespace AshtavinayakAPP.Controllers
         }
 
 
+        // POST: api/User/TestLogin
+        // Testing-only bypass endpoint — issues a real JWT without OTP verification.
+        // DISABLED by default. Enable by setting Testing__Key to a secret value in
+        // Azure App Service Configuration. Leave blank/missing to disable entirely.
+        // Never expose this in production without a strong, random Testing__Key.
+        [HttpPost("TestLogin")]
+        public async Task<IActionResult> TestLogin([FromBody] TestLoginRequest request)
+        {
+            var testingKey = _configuration["Testing:Key"];
+            if (string.IsNullOrWhiteSpace(testingKey))
+                return NotFound(); // Endpoint invisible when not configured
+
+            if (request.TestKey != testingKey)
+                return Unauthorized(new { Message = "Invalid testing key." });
+
+            if (string.IsNullOrEmpty(request.MobileNo))
+                return BadRequest(new { Message = "MobileNo is required." });
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.PhoneNumber == request.MobileNo);
+            if (user == null)
+                return NotFound(new { Message = "Mobile number not registered." });
+
+            var token = GenerateJwtToken(user);
+            _logger.LogWarning("[TestLogin] JWT issued without OTP for {Phone} — testing bypass used.", request.MobileNo);
+
+            return Ok(new
+            {
+                Message = "Test login successful.",
+                Token = token,
+                User = new
+                {
+                    user.UserId,
+                    user.UserName,
+                    user.Email,
+                    user.PhoneNumber,
+                    user.Role
+                }
+            });
+        }
+
         private string GenerateJwtToken(User user)
         {
             var jwtSettings  = _configuration.GetSection("JwtSettings");
@@ -208,5 +255,11 @@ namespace AshtavinayakAPP.Controllers
     {
         public string MobileNo { get; set; }
         public string OTP { get; set; }
+    }
+
+    public class TestLoginRequest
+    {
+        public string MobileNo { get; set; }
+        public string TestKey { get; set; }
     }
 }
