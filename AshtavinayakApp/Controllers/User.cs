@@ -181,6 +181,7 @@ namespace AshtavinayakAPP.Controllers
         // DISABLED by default. Enable by setting Testing__Key to a secret value in
         // Azure App Service Configuration. Leave blank/missing to disable entirely.
         // Never expose this in production without a strong, random Testing__Key.
+        [AllowAnonymous]
         [HttpPost("TestLogin")]
         public async Task<IActionResult> TestLogin([FromBody] TestLoginRequest request)
         {
