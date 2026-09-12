@@ -17,6 +17,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -358,4 +360,68 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => fa
 // Readiness: includes the DB connectivity check — for "can it actually serve traffic" probes.
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Tags.Contains("ready") });
 
+// ── Testing bypass login ──────────────────────────────────────────────────────
+// Minimal API endpoint — completely outside MVC pipeline, no global auth filters.
+// Active only when Testing__Key is set in Azure App Service Configuration.
+// Remove that setting to disable the endpoint before go-live.
+app.MapPost("/api/bypass/login", async (
+    HttpRequest req,
+    IConfiguration config,
+    AshtvinayakTravelContext db) =>
+{
+    var testKey = config["Testing:Key"];
+    if (string.IsNullOrWhiteSpace(testKey))
+        return Results.NotFound(new { message = "Test login endpoint not available." });
+
+    BypassLoginRequest? body;
+    try { body = await req.ReadFromJsonAsync<BypassLoginRequest>(); }
+    catch { return Results.BadRequest(new { message = "Invalid JSON body." }); }
+
+    if (body is null)
+        return Results.BadRequest(new { message = "Request body is required." });
+
+    if (body.TestKey != testKey)
+        return Results.Json(new { message = "Invalid testing key." }, statusCode: 401);
+
+    if (string.IsNullOrEmpty(body.MobileNo))
+        return Results.BadRequest(new { message = "mobileNo is required." });
+
+    var user = await db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == body.MobileNo);
+    if (user is null)
+        return Results.NotFound(new { message = "Mobile number not registered." });
+
+    // Build JWT — same settings as UserController.GenerateJwtToken
+    var jwtCfg  = config.GetSection("JwtSettings");
+    var keyBytes = Encoding.UTF8.GetBytes(jwtCfg["SecretKey"]
+        ?? throw new InvalidOperationException("JwtSettings:SecretKey not configured."));
+    var claims = new[]
+    {
+        new Claim(JwtRegisteredClaimNames.Sub,   user.UserId.ToString()),
+        new Claim(JwtRegisteredClaimNames.Email, user.Email),
+        new Claim(ClaimTypes.Role,               user.Role),
+        new Claim(JwtRegisteredClaimNames.Jti,   Guid.NewGuid().ToString()),
+        new Claim("PhoneNumber",                 user.PhoneNumber)
+    };
+    var jwt = new JwtSecurityToken(
+        issuer:            jwtCfg["Issuer"],
+        audience:          jwtCfg["Audience"],
+        claims:            claims,
+        expires:           DateTime.UtcNow.AddHours(24),
+        signingCredentials: new SigningCredentials(
+            new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256));
+    var token = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+    Log.Warning("[BypassLogin] JWT issued without OTP for {Phone} — testing bypass used.", body.MobileNo);
+
+    return Results.Ok(new
+    {
+        message = "Test login successful.",
+        token,
+        user = new { user.UserId, user.UserName, user.Email, user.PhoneNumber, user.Role }
+    });
+}).AllowAnonymous();
+
 await app.RunAsync();
+
+/// <summary>Request model for the /api/bypass/login testing endpoint.</summary>
+record BypassLoginRequest(string MobileNo, string TestKey);
