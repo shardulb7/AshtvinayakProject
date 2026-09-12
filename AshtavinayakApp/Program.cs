@@ -397,10 +397,10 @@ app.MapPost("/api/bypass/login", async (
     var claims = new[]
     {
         new Claim(JwtRegisteredClaimNames.Sub,   user.UserId.ToString()),
-        new Claim(JwtRegisteredClaimNames.Email, user.Email),
-        new Claim(ClaimTypes.Role,               user.Role),
+        new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
+        new Claim(ClaimTypes.Role,               user.Role ?? "User"),
         new Claim(JwtRegisteredClaimNames.Jti,   Guid.NewGuid().ToString()),
-        new Claim("PhoneNumber",                 user.PhoneNumber)
+        new Claim("PhoneNumber",                 user.PhoneNumber ?? "")
     };
     var jwt = new JwtSecurityToken(
         issuer:            jwtCfg["Issuer"],
