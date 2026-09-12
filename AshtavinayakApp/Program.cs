@@ -369,57 +369,73 @@ app.MapPost("/api/bypass/login", async (
     IConfiguration config,
     AshtvinayakTravelContext db) =>
 {
-    var testKey = config["Testing:Key"];
-    if (string.IsNullOrWhiteSpace(testKey))
-        return Results.NotFound(new { message = "Test login endpoint not available." });
-
-    BypassLoginRequest? body;
-    try { body = await req.ReadFromJsonAsync<BypassLoginRequest>(); }
-    catch { return Results.BadRequest(new { message = "Invalid JSON body." }); }
-
-    if (body is null)
-        return Results.BadRequest(new { message = "Request body is required." });
-
-    if (body.TestKey != testKey)
-        return Results.Json(new { message = "Invalid testing key." }, statusCode: 401);
-
-    if (string.IsNullOrEmpty(body.MobileNo))
-        return Results.BadRequest(new { message = "mobileNo is required." });
-
-    var user = await db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == body.MobileNo);
-    if (user is null)
-        return Results.NotFound(new { message = "Mobile number not registered." });
-
-    // Build JWT — same settings as UserController.GenerateJwtToken
-    var jwtCfg  = config.GetSection("JwtSettings");
-    var keyBytes = Encoding.UTF8.GetBytes(jwtCfg["SecretKey"]
-        ?? throw new InvalidOperationException("JwtSettings:SecretKey not configured."));
-    var claims = new[]
+    try
     {
-        new Claim(JwtRegisteredClaimNames.Sub,   user.UserId.ToString()),
-        new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
-        new Claim(ClaimTypes.Role,               user.Role ?? "User"),
-        new Claim(JwtRegisteredClaimNames.Jti,   Guid.NewGuid().ToString()),
-        new Claim("PhoneNumber",                 user.PhoneNumber ?? "")
-    };
-    var jwt = new JwtSecurityToken(
-        issuer:            jwtCfg["Issuer"],
-        audience:          jwtCfg["Audience"],
-        claims:            claims,
-        expires:           DateTime.UtcNow.AddHours(24),
-        signingCredentials: new SigningCredentials(
-            new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256));
-    var token = new JwtSecurityTokenHandler().WriteToken(jwt);
+        var testKey = config["Testing:Key"];
+        if (string.IsNullOrWhiteSpace(testKey))
+            return Results.NotFound(new { message = "Test login endpoint not available." });
 
-    Log.Warning("[BypassLogin] JWT issued without OTP for {Phone} — testing bypass used.", body.MobileNo);
+        BypassLoginRequest? body;
+        try { body = await req.ReadFromJsonAsync<BypassLoginRequest>(); }
+        catch (Exception ex) { return Results.BadRequest(new { message = "Invalid JSON body.", detail = ex.Message }); }
 
-    return Results.Ok(new
+        if (body is null)
+            return Results.BadRequest(new { message = "Request body is required." });
+
+        if (body.TestKey != testKey)
+            return Results.Json(new { message = "Invalid testing key." }, statusCode: 401);
+
+        if (string.IsNullOrEmpty(body.MobileNo))
+            return Results.BadRequest(new { message = "mobileNo is required." });
+
+        var user = await db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.PhoneNumber == body.MobileNo);
+        if (user is null)
+            return Results.NotFound(new { message = "Mobile number not registered.", phone = body.MobileNo });
+
+        // Build JWT — same settings as UserController.GenerateJwtToken
+        var jwtCfg   = config.GetSection("JwtSettings");
+        var secretKey = jwtCfg["SecretKey"];
+        if (string.IsNullOrWhiteSpace(secretKey))
+            return Results.Problem("JwtSettings:SecretKey not configured.", statusCode: 500);
+
+        var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub,   user.UserId.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
+            new Claim(ClaimTypes.Role,               user.Role ?? "User"),
+            new Claim(JwtRegisteredClaimNames.Jti,   Guid.NewGuid().ToString()),
+            new Claim("PhoneNumber",                 user.PhoneNumber ?? "")
+        };
+        var jwt = new JwtSecurityToken(
+            issuer:            jwtCfg["Issuer"],
+            audience:          jwtCfg["Audience"],
+            claims:            claims,
+            expires:           DateTime.UtcNow.AddHours(24),
+            signingCredentials: new SigningCredentials(
+                new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256));
+        var token = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+        Log.Warning("[BypassLogin] JWT issued without OTP for {Phone} — testing bypass used.", body.MobileNo);
+
+        return Results.Ok(new
+        {
+            message = "Test login successful.",
+            token,
+            user = new { user.UserId, user.UserName, user.Email, user.PhoneNumber, user.Role }
+        });
+    }
+    catch (Exception ex)
     {
-        message = "Test login successful.",
-        token,
-        user = new { user.UserId, user.UserName, user.Email, user.PhoneNumber, user.Role }
-    });
+        // Return error as JSON — prevents UseExceptionHandler from redirecting to Login HTML
+        return Results.Problem(
+            title:      "Bypass login failed",
+            detail:     ex.Message,
+            statusCode: 500);
+    }
 }).AllowAnonymous();
+
 
 await app.RunAsync();
 
