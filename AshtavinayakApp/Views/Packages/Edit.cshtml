@@ -94,6 +94,23 @@
                         <input asp-for="CarPackagePrice" type="number" min="0" class="form-control" />
                         <span asp-validation-for="CarPackagePrice" class="text-danger"></span>
                     </div>
+                    <hr />
+                    <p class="text-muted small mb-1">Additional charges (per person beyond base count)</p>
+                    <div class="form-group">
+                        <label asp-for="AdultPrice" class="control-label">Extra Adult Charge</label>
+                        <input asp-for="AdultPrice" type="number" min="0" class="form-control" />
+                        <span asp-validation-for="AdultPrice" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Child3To8YrswithSeat" class="control-label">Extra Kid (3-8yr) with Seat</label>
+                        <input asp-for="Child3To8YrswithSeat" type="number" min="0" class="form-control" />
+                        <span asp-validation-for="Child3To8YrswithSeat" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Child3To8YrsWithoutSeat" class="control-label">Extra Kid (3-8yr) without Seat</label>
+                        <input asp-for="Child3To8YrsWithoutSeat" type="number" min="0" class="form-control" />
+                        <span asp-validation-for="Child3To8YrsWithoutSeat" class="text-danger"></span>
+                    </div>
                 </div>
 
                 <div class="form-group">
