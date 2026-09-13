@@ -218,9 +218,21 @@ namespace AshtavinayakAPP.Services.BookingSrc
                 if (!package.IsCar)
                     return (false, "The selected package is not a car package.", null);
 
-                decimal computedTotalPayment = package.CarPackagePrice ?? 0;
-                if (computedTotalPayment <= 0)
+                decimal basePrice = package.CarPackagePrice ?? 0;
+                if (basePrice <= 0)
                     return (false, "Unable to determine package pricing.", null);
+
+                // Additional charges: adults beyond pkgPersonCount + kids
+                int coveredPeople  = package.PkgPersonCount ?? 0;
+                int extraAdults    = Math.Max(0, (request.Adults ?? 0) - coveredPeople);
+                int kidsWithSeat   = request.Childwithseat ?? 0;
+                int kidsWithoutSeat = request.Childwithoutseat ?? 0;
+
+                decimal extraAdultCharge       = extraAdults     * (package.AdultPrice             ?? 0);
+                decimal kidsWithSeatCharge     = kidsWithSeat    * (package.Child3To8YrswithSeat   ?? 0);
+                decimal kidsWithoutSeatCharge  = kidsWithoutSeat * (package.Child3To8YrsWithoutSeat ?? 0);
+
+                decimal computedTotalPayment = basePrice + extraAdultCharge + kidsWithSeatCharge + kidsWithoutSeatCharge;
 
                 if (request.Advance.HasValue && request.Advance.Value > computedTotalPayment)
                     return (false, "Advance amount cannot exceed the total payment.", null);
@@ -290,18 +302,25 @@ namespace AshtavinayakAPP.Services.BookingSrc
                 
                 return (true, "Car booking successful!", new
                 {
-                    BookingId = booking.BookingId,
-                    FamilyBookingId = familyBooking.FamilyId,
-                    CarType = request.CarType,
-                    Status = booking.Status,
-                    UserId = request.UserId.Value,
-                    TripId = request.TripId,
-                    PickupPointId = request.PickupPointId,
-                    Droppoint = request.Droppoint,
-                    BookingDate = DateTime.UtcNow,
-                    RoomType = booking.RoomType,
-                    TotalPayment = booking.TotalPayment,
-                    Advance = booking.Advance
+                    BookingId        = booking.BookingId,
+                    FamilyBookingId  = familyBooking.FamilyId,
+                    CarType          = request.CarType,
+                    Status           = booking.Status,
+                    UserId           = request.UserId.Value,
+                    TripId           = request.TripId,
+                    PickupPointId    = request.PickupPointId,
+                    Droppoint        = request.Droppoint,
+                    BookingDate      = DateTime.UtcNow,
+                    RoomType         = booking.RoomType,
+                    TotalPayment     = booking.TotalPayment,
+                    Advance          = booking.Advance,
+                    PriceBreakdown   = new
+                    {
+                        BasePrice           = basePrice,
+                        ExtraAdultCharge    = extraAdultCharge,
+                        KidsWithSeatCharge  = kidsWithSeatCharge,
+                        KidsWithoutSeatCharge = kidsWithoutSeatCharge
+                    }
                 });
 
                 
