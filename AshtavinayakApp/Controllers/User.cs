@@ -91,12 +91,12 @@ namespace AshtavinayakAPP.Controllers
 
             // MED-07: Use cryptographically secure RNG — System.Random is predictable
             var otp = System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999).ToString();
-            var otpExpiry = DateTime.UtcNow.AddMinutes(5); // OTP expires after 5 minutes
+            var otpExpiry = DateTime.UtcNow.AddMinutes(10); // OTP expires after 10 minutes (must match DLT template)
 
             // Store OTP temporarily with expiry
             _otpStorage[mobileNoRequest.MobileNo] = (otp.ToString(), otpExpiry);
 
-            var message = $"Welcome to iTas Tourism Your OTP for Ashtavinayak Yatra is {otp}. It is valid for 5 minutes. Do not share this with anyone.";
+            var message = $"Welcome to iTas Tourism Your OTP for Ashtavinayak Yatra is {otp}. It is valid for 10 minutes. Do not share this with anyone."; // ⚠️ Must match DLT-registered template EXACTLY
             var otpTemplateId = _configuration["SmsGateway:OtpTemplateId"] ?? string.Empty;
             var isSent = await _smsService.SendAsync(mobileNoRequest.MobileNo, message, otpTemplateId);
 
