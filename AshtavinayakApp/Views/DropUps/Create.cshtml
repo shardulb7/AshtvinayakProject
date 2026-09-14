@@ -1,4 +1,4 @@
-﻿@model AshtavinayakAPP.Models.DropUp
+@model AshtavinayakAPP.Models.DropUp
 
 @{
     ViewData["Title"] = "Create";
@@ -32,6 +32,14 @@
                 <label asp-for="CityId" class="control-label">City Name</label><span style="color: red;">*</span>
                 <select asp-for="CityId" class="form-control" asp-items="ViewBag.CityId" required>
                     <option value="">-- Select City --</option>
+                </select>
+            </div>
+
+            <!-- Package Dropdown -->
+            <div class="form-group">
+                <label asp-for="PackageId" class="control-label">Select Package</label>
+                <select asp-for="PackageId" class="form-control" asp-items="ViewBag.PackageId">
+                    <option value="">-- Select Package --</option>
                 </select>
             </div>
 

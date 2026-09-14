@@ -71,6 +71,10 @@ namespace AshtavinayakAPP.Controllers
                     AdultPrice = package.AdultPrice,
                     Child3To8YrsWithSeat = package.Child3To8YrswithSeat,
                     Child3To8YrsWithoutSeat = package.Child3To8YrsWithoutSeat,
+                    FamilyRoomChargePerPerson = package.FamilyRoomChargePerPerson,
+                    IsCar = package.IsCar,
+                    CarPackagePrice = package.CarPackagePrice,
+                    PkgPersonCount = package.PkgPersonCount,
                     Category = package.Category?.CategoryName,
                     City = package.City?.CityName,
                     Inclusions = package.Inclusions,
@@ -108,7 +112,11 @@ namespace AshtavinayakAPP.Controllers
                         CityName = p.City.CityName,
                         AdultPrice = p.AdultPrice,
                         Child3To8YrsWithSeat = p.Child3To8YrswithSeat,
-                        Child3To8YrsWithoutSeat = p.Child3To8YrsWithoutSeat
+                        Child3To8YrsWithoutSeat = p.Child3To8YrsWithoutSeat,
+                        FamilyRoomChargePerPerson = p.FamilyRoomChargePerPerson,
+                        IsCar = p.IsCar,
+                        CarPackagePrice = p.CarPackagePrice,
+                        PkgPersonCount = p.PkgPersonCount
                     })
                     .ToListAsync();
 

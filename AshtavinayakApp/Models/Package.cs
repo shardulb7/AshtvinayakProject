@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace AshtavinayakAPP.Models;
@@ -26,6 +26,8 @@ public partial class Package
     public int? Child3To8YrsWithoutSeat { get; set; }
 
     public bool IsCar { get; set; }
+
+    public int? FamilyRoomChargePerPerson { get; set; }
 
     public string? CarType { get; set; }
 

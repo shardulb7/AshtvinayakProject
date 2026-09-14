@@ -73,6 +73,7 @@ namespace AshtavinayakAPP.Controllers
         public IActionResult Create()
         {
             ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName");
+            ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName");
             return View();
         }
 
@@ -81,7 +82,7 @@ namespace AshtavinayakAPP.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("DroppointId,DropPoint,CityId")] DropUp dropUp)
+        public async Task<IActionResult> Create([Bind("DroppointId,DropPoint,CityId,PackageId")] DropUp dropUp)
         {
             if (ModelState.IsValid)
             {
@@ -90,6 +91,7 @@ namespace AshtavinayakAPP.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName", dropUp.CityId);
+            ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName", dropUp.PackageId);
             return View(dropUp);
         }
 
@@ -107,6 +109,7 @@ namespace AshtavinayakAPP.Controllers
                 return NotFound();
             }
             ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName", dropUp.CityId);
+            ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName", dropUp.PackageId);
             return View(dropUp);
         }
 
@@ -115,7 +118,7 @@ namespace AshtavinayakAPP.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("DroppointId,DropPoint,CityId")] DropUp dropUp)
+        public async Task<IActionResult> Edit(int id, [Bind("DroppointId,DropPoint,CityId,PackageId")] DropUp dropUp)
         {
             if (id != dropUp.DroppointId)
             {
@@ -143,6 +146,7 @@ namespace AshtavinayakAPP.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName", dropUp.CityId);
+            ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName", dropUp.PackageId);
             return View(dropUp);
         }
 

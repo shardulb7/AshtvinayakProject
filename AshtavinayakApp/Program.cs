@@ -311,6 +311,30 @@ await using (var cacheTableConnection = new Microsoft.Data.SqlClient.SqlConnecti
     await cacheTableCommand.ExecuteNonQueryAsync();
 }
 
+// Schema migrations — idempotent ALTER TABLE statements for columns added after initial scaffolding.
+// Safe to run on every restart; IF NOT EXISTS guards prevent duplicate column errors.
+await using (var schemaConn = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+{
+    await schemaConn.OpenAsync();
+    await using var schemaCmd = schemaConn.CreateCommand();
+    schemaCmd.CommandText = """
+        IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                       WHERE TABLE_NAME='Packages' AND COLUMN_NAME='FamilyRoomChargePerPerson')
+            ALTER TABLE [dbo].[Packages] ADD [FamilyRoomChargePerPerson] INT NULL;
+
+        IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                       WHERE TABLE_NAME='DropUps' AND COLUMN_NAME='PackageId')
+        BEGIN
+            ALTER TABLE [dbo].[DropUps] ADD [PackageId] INT NULL;
+            ALTER TABLE [dbo].[DropUps]
+                ADD CONSTRAINT [FK_DropUps_Packages] FOREIGN KEY ([PackageId])
+                REFERENCES [dbo].[Packages]([PackageId]);
+        END
+        """;
+    await schemaCmd.ExecuteNonQueryAsync();
+    Log.Information("Schema migrations applied (FamilyRoomChargePerPerson, DropUps.PackageId).");
+}
+
 // Seed reference data on startup — idempotent, safe on every restart.
 // Exceptions are caught inside SeedAsync; the app continues even if seeding fails.
 var seederLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseSeeder");

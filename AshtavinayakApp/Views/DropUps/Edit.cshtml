@@ -1,4 +1,4 @@
-﻿@model AshtavinayakAPP.Models.DropUp
+@model AshtavinayakAPP.Models.DropUp
 
 @{
     ViewData["Title"] = "Edit";
@@ -36,6 +36,14 @@
                         <option value="">-- Select City --</option>
                     </select>
                     <span asp-validation-for="CityId" class="text-danger"></span>
+                </div>
+
+                <!-- Package Dropdown -->
+                <div class="form-group">
+                    <label asp-for="PackageId" class="control-label">Select Package</label>
+                    <select asp-for="PackageId" class="form-control" asp-items="ViewBag.PackageId">
+                        <option value="">-- Select Package --</option>
+                    </select>
                 </div>
 
                 <!-- Submit and Cancel Buttons -->

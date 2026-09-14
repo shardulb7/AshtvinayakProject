@@ -75,6 +75,15 @@ namespace AshtavinayakAPP.Services.BookingSrc
                     + (request.Childwithseat ?? 0) * (package.Child3To8YrswithSeat ?? 0)
                     + (request.Childwithoutseat ?? 0) * (package.Child3To8YrsWithoutSeat ?? 0);
 
+                // Family room surcharge — configurable per package
+                if (string.Equals(request.RoomType, "family", StringComparison.OrdinalIgnoreCase)
+                    && package.FamilyRoomChargePerPerson.HasValue
+                    && package.FamilyRoomChargePerPerson.Value > 0)
+                {
+                    int totalPassengers = (request.Adults ?? 0) + (request.Childwithseat ?? 0) + (request.Childwithoutseat ?? 0);
+                    computedTotalPayment += totalPassengers * package.FamilyRoomChargePerPerson.Value;
+                }
+
                 if (computedTotalPayment <= 0)
                     return (false, "Unable to determine package pricing for the given passenger counts.", null);
 
