@@ -336,23 +336,30 @@ var schemaSqls = new[]
      "UPDATE [dbo].[Categories] SET [IsCar] = 1 WHERE [CategoryId] = 2;"),
 };
 
-await using (var schemaConn = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+try
 {
-    await schemaConn.OpenAsync();
-    foreach (var (label, sql) in schemaSqls)
+    await using (var schemaConn = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
     {
-        try
+        await schemaConn.OpenAsync();
+        foreach (var (label, sql) in schemaSqls)
         {
-            await using var cmd = schemaConn.CreateCommand();
-            cmd.CommandText = sql;
-            await cmd.ExecuteNonQueryAsync();
-            Log.Information("Schema migration OK: {Label}", label);
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Schema migration failed (non-fatal): {Label}", label);
+            try
+            {
+                await using var cmd = schemaConn.CreateCommand();
+                cmd.CommandText = sql;
+                await cmd.ExecuteNonQueryAsync();
+                Log.Information("Schema migration OK: {Label}", label);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Schema migration failed (non-fatal): {Label}", label);
+            }
         }
     }
+}
+catch (Exception ex)
+{
+    Log.Warning(ex, "Schema SQL connection failed (non-fatal) — skipping startup schema migrations.");
 }
 
 // Seed reference data on startup — idempotent, safe on every restart.
