@@ -341,6 +341,18 @@ var schemaSqls = new[]
      INNER JOIN [dbo].[Categories] c ON p.[CategoryId] = c.[CategoryId]
      WHERE c.[IsCar] = 1 AND p.[IsDeleted] = 0;
      """),
+    ("Clear soft-deleted categoryId=2 to free PK slot for car category remap",
+     """
+     -- Remove soft-deleted old category at ID=2 so the car category can take that ID.
+     -- Only removes it if no active (non-deleted) packages still reference it.
+     DELETE FROM [dbo].[Categories]
+     WHERE [CategoryId] = 2
+       AND [IsDeleted]  = 1
+       AND NOT EXISTS (
+           SELECT 1 FROM [dbo].[Packages]
+           WHERE [CategoryId] = 2 AND [IsDeleted] = 0
+       );
+     """),
     ("Remap car categoryId 7 -> 2 (client requirement; IDENTITY column so use INSERT+DELETE)",
      """
      IF EXISTS     (SELECT 1 FROM [dbo].[Categories] WHERE [CategoryId] = 7 AND [CategoryName] LIKE '%Car%')
