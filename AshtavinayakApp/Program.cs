@@ -334,6 +334,13 @@ var schemaSqls = new[]
      """),
     ("Set car categories as IsCar=1 (any category with 'Car' in name)",
      "UPDATE [dbo].[Categories] SET [IsCar] = 1 WHERE [CategoryName] LIKE '%Car%' AND [IsDeleted] = 0;"),
+    ("Sync Package.IsCar from Category.IsCar",
+     """
+     UPDATE p SET p.[IsCar] = 1
+     FROM [dbo].[Packages] p
+     INNER JOIN [dbo].[Categories] c ON p.[CategoryId] = c.[CategoryId]
+     WHERE c.[IsCar] = 1 AND p.[IsDeleted] = 0;
+     """),
 };
 
 try

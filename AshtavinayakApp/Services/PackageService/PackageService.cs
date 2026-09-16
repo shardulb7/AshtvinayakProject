@@ -24,15 +24,18 @@ namespace AshtavinayakAPP.Services.PackageService
         {
             if (isCartype)
             {
+                // When fetching car packages, trust the categoryId — don't additionally require
+                // p.IsCar=true because existing packages default to false (column was just added).
+                // The car category (IsCar=true) is the correct discriminator.
                 return await _context.Packages
-                .Where(p => p.CategoryId == categoryId && p.IsCar && !p.IsDeleted)
-                .ToListAsync();
+                    .Where(p => p.CategoryId == categoryId && !p.IsDeleted)
+                    .ToListAsync();
             }
             else
             {
                 return await _context.Packages
-                .Where(p => p.CategoryId == categoryId && !p.IsCar && !p.IsDeleted)
-                .ToListAsync();
+                    .Where(p => p.CategoryId == categoryId && !p.IsCar && !p.IsDeleted)
+                    .ToListAsync();
             }
         }
     }
