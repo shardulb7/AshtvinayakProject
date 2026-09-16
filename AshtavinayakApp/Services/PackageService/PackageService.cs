@@ -24,11 +24,15 @@ namespace AshtavinayakAPP.Services.PackageService
         {
             if (isCartype)
             {
-                // When fetching car packages, trust the categoryId — don't additionally require
-                // p.IsCar=true because existing packages default to false (column was just added).
-                // The car category (IsCar=true) is the correct discriminator.
+                // When isCarType=true, find packages whose Category has IsCar=true.
+                // This is resilient to DB ID mismatches — the client may pass any ID
+                // (e.g. 2) but the actual car category ID in DB may differ (e.g. 7).
                 return await _context.Packages
-                    .Where(p => p.CategoryId == categoryId && !p.IsDeleted)
+                    .Include(p => p.Category)
+                    .Where(p => p.Category != null
+                             && p.Category.IsCar
+                             && !p.Category.IsDeleted
+                             && !p.IsDeleted)
                     .ToListAsync();
             }
             else
