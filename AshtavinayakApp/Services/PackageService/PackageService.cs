@@ -24,15 +24,13 @@ namespace AshtavinayakAPP.Services.PackageService
         {
             if (isCartype)
             {
-                // When isCarType=true, find packages whose Category has IsCar=true.
-                // This is resilient to DB ID mismatches — the client may pass any ID
-                // (e.g. 2) but the actual car category ID in DB may differ (e.g. 7).
+                // Filter by Category.IsCar via subquery — avoids loading the navigation
+                // property which causes circular-reference JSON serialization failure.
                 return await _context.Packages
-                    .Include(p => p.Category)
-                    .Where(p => p.Category != null
-                             && p.Category.IsCar
-                             && !p.Category.IsDeleted
-                             && !p.IsDeleted)
+                    .Where(p => !p.IsDeleted
+                             && _context.Categories.Any(c => c.CategoryId == p.CategoryId
+                                                          && c.IsCar
+                                                          && !c.IsDeleted))
                     .ToListAsync();
             }
             else
