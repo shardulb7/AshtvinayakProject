@@ -332,8 +332,8 @@ var schemaSqls = new[]
                     WHERE TABLE_NAME='Categories' AND COLUMN_NAME='IsCar')
          ALTER TABLE [dbo].[Categories] ADD [IsCar] BIT NOT NULL DEFAULT 0;
      """),
-    ("Set categoryId=2 as IsCar=1 (Ashtavinayak by Car)",
-     "UPDATE [dbo].[Categories] SET [IsCar] = 1 WHERE [CategoryId] = 2;"),
+    ("Set car categories as IsCar=1 (any category with 'Car' in name)",
+     "UPDATE [dbo].[Categories] SET [IsCar] = 1 WHERE [CategoryName] LIKE '%Car%' AND [IsDeleted] = 0;"),
 };
 
 try
