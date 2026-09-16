@@ -341,6 +341,32 @@ var schemaSqls = new[]
      INNER JOIN [dbo].[Categories] c ON p.[CategoryId] = c.[CategoryId]
      WHERE c.[IsCar] = 1 AND p.[IsDeleted] = 0;
      """),
+    ("Remap car categoryId 7 -> 2 (client requirement; IDENTITY column so use INSERT+DELETE)",
+     """
+     IF EXISTS     (SELECT 1 FROM [dbo].[Categories] WHERE [CategoryId] = 7 AND [CategoryName] LIKE '%Car%')
+     AND NOT EXISTS(SELECT 1 FROM [dbo].[Categories] WHERE [CategoryId] = 2)
+     BEGIN
+         SET IDENTITY_INSERT [dbo].[Categories] ON;
+         INSERT INTO [dbo].[Categories] ([CategoryId],[CategoryName],[CityId],[IsDeleted],[IsCar],[TourDestinationId])
+         SELECT 2,[CategoryName],[CityId],[IsDeleted],1,[TourDestinationId]
+         FROM [dbo].[Categories] WHERE [CategoryId] = 7;
+         SET IDENTITY_INSERT [dbo].[Categories] OFF;
+
+         ALTER TABLE [dbo].[Packages]  NOCHECK CONSTRAINT ALL;
+         ALTER TABLE [dbo].[Trips]     NOCHECK CONSTRAINT ALL;
+         ALTER TABLE [dbo].[Histories] NOCHECK CONSTRAINT ALL;
+
+         UPDATE [dbo].[Packages]  SET [CategoryId] = 2 WHERE [CategoryId] = 7;
+         UPDATE [dbo].[Trips]     SET [CategoryId] = 2 WHERE [CategoryId] = 7;
+         UPDATE [dbo].[Histories] SET [CategoryId] = 2 WHERE [CategoryId] = 7;
+
+         DELETE FROM [dbo].[Categories] WHERE [CategoryId] = 7;
+
+         ALTER TABLE [dbo].[Packages]  WITH CHECK CHECK CONSTRAINT ALL;
+         ALTER TABLE [dbo].[Trips]     WITH CHECK CHECK CONSTRAINT ALL;
+         ALTER TABLE [dbo].[Histories] WITH CHECK CHECK CONSTRAINT ALL;
+     END;
+     """),
 };
 
 try
