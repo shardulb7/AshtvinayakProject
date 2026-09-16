@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace AshtavinayakAPP.Models;
@@ -12,6 +12,8 @@ public partial class Category
     public int? CityId { get; set; }
 
     public bool IsDeleted { get; set; }
+
+    public bool IsCar { get; set; }
 
     public int? TourDestinationId { get; set; }
 

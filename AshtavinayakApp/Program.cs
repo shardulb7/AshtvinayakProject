@@ -327,9 +327,16 @@ try
             IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
                            WHERE TABLE_NAME='DropUps' AND COLUMN_NAME='PackageId')
                 ALTER TABLE [dbo].[DropUps] ADD [PackageId] INT NULL;
+
+            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                           WHERE TABLE_NAME='Categories' AND COLUMN_NAME='IsCar')
+                ALTER TABLE [dbo].[Categories] ADD [IsCar] BIT NOT NULL DEFAULT 0;
+
+            -- Task 1: Ensure "Ashtavinayak by Car" (categoryId=2) is always flagged as IsCar=1
+            UPDATE [dbo].[Categories] SET [IsCar] = 1 WHERE [CategoryId] = 2;
             """;
         await schemaCmd.ExecuteNonQueryAsync();
-        Log.Information("Schema migrations applied (FamilyRoomChargePerPerson, DropUps.PackageId).");
+        Log.Information("Schema migrations applied (FamilyRoomChargePerPerson, DropUps.PackageId, Categories.IsCar).");
     }
 }
 catch (Exception ex)

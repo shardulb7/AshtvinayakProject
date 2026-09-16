@@ -1,4 +1,4 @@
-﻿using AshtavinayakAPP.Models;
+using AshtavinayakAPP.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AshtavinayakAPP.Services.CategoryService
@@ -21,9 +21,12 @@ namespace AshtavinayakAPP.Services.CategoryService
         // Method to get the list of categories
         public async Task<List<Category>> GetCategoriesList(int cityid, long tourDestinationId)
         {
-
-            return await _context.Categories.Where(x => x.CityId == cityid && x.TourDestinationId == tourDestinationId && !x.IsDeleted).ToListAsync();
-
+            return await _context.Categories
+                .Where(x => x.CityId == cityid
+                         && x.TourDestinationId == tourDestinationId
+                         && !x.IsDeleted
+                         && !x.IsCar)   // exclude car categories — car booking uses a separate flow
+                .ToListAsync();
         }
 
     }
