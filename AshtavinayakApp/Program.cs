@@ -311,38 +311,48 @@ await using (var cacheTableConnection = new Microsoft.Data.SqlClient.SqlConnecti
     await cacheTableCommand.ExecuteNonQueryAsync();
 }
 
-// Schema migrations — idempotent ALTER TABLE statements for columns added after initial scaffolding.
-// Safe to run on every restart; IF NOT EXISTS guards prevent duplicate column errors.
-try
+// Schema migrations — idempotent, each statement in its own try-catch so one failure doesn't skip the rest.
+var schemaSqls = new[]
 {
-    await using (var schemaConn = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+    ("FamilyRoomChargePerPerson on Packages",
+     """
+     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='Packages' AND COLUMN_NAME='FamilyRoomChargePerPerson')
+         ALTER TABLE [dbo].[Packages] ADD [FamilyRoomChargePerPerson] INT NULL;
+     """),
+    ("PackageId on DropUp",           // table is 'DropUp' not 'DropUps'
+     """
+     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='DropUp' AND COLUMN_NAME='PackageId')
+         ALTER TABLE [dbo].[DropUp] ADD [PackageId] INT NULL;
+     """),
+    ("IsCar on Categories",
+     """
+     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='Categories' AND COLUMN_NAME='IsCar')
+         ALTER TABLE [dbo].[Categories] ADD [IsCar] BIT NOT NULL DEFAULT 0;
+     """),
+    ("Set categoryId=2 as IsCar=1 (Ashtavinayak by Car)",
+     "UPDATE [dbo].[Categories] SET [IsCar] = 1 WHERE [CategoryId] = 2;"),
+};
+
+await using (var schemaConn = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+{
+    await schemaConn.OpenAsync();
+    foreach (var (label, sql) in schemaSqls)
     {
-        await schemaConn.OpenAsync();
-        await using var schemaCmd = schemaConn.CreateCommand();
-        schemaCmd.CommandText = """
-            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-                           WHERE TABLE_NAME='Packages' AND COLUMN_NAME='FamilyRoomChargePerPerson')
-                ALTER TABLE [dbo].[Packages] ADD [FamilyRoomChargePerPerson] INT NULL;
-
-            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-                           WHERE TABLE_NAME='DropUps' AND COLUMN_NAME='PackageId')
-                ALTER TABLE [dbo].[DropUps] ADD [PackageId] INT NULL;
-
-            IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-                           WHERE TABLE_NAME='Categories' AND COLUMN_NAME='IsCar')
-                ALTER TABLE [dbo].[Categories] ADD [IsCar] BIT NOT NULL DEFAULT 0;
-
-            -- Task 1: Ensure "Ashtavinayak by Car" (categoryId=2) is always flagged as IsCar=1
-            UPDATE [dbo].[Categories] SET [IsCar] = 1 WHERE [CategoryId] = 2;
-            """;
-        await schemaCmd.ExecuteNonQueryAsync();
-        Log.Information("Schema migrations applied (FamilyRoomChargePerPerson, DropUps.PackageId, Categories.IsCar).");
+        try
+        {
+            await using var cmd = schemaConn.CreateCommand();
+            cmd.CommandText = sql;
+            await cmd.ExecuteNonQueryAsync();
+            Log.Information("Schema migration OK: {Label}", label);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Schema migration failed (non-fatal): {Label}", label);
+        }
     }
-}
-catch (Exception ex)
-{
-    // Non-fatal — log and continue. Columns may already exist or the DB user may lack ALTER rights.
-    Log.Warning(ex, "Schema migration SQL failed (non-fatal). Columns may already exist.");
 }
 
 // Seed reference data on startup — idempotent, safe on every restart.
