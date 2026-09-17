@@ -125,6 +125,36 @@
                     <span asp-validation-for="FamilyRoomChargePerPerson" class="text-danger"></span>
                 </div>
 
+                <div class="card border-info mt-2 mb-2">
+                    <div class="card-header bg-info text-white fw-bold">Room Sharing Charges (per person – added to base adult price)</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label fw-bold">Single Sharing – Rs.</label>
+                                    <input asp-for="SingleSharingChargePerPerson" type="number" min="0" class="form-control" placeholder="Leave blank if not offered" />
+                                    <span asp-validation-for="SingleSharingChargePerPerson" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label fw-bold">Double Sharing – Rs.</label>
+                                    <input asp-for="DoubleSharingChargePerPerson" type="number" min="0" class="form-control" placeholder="Leave blank if not offered" />
+                                    <span asp-validation-for="DoubleSharingChargePerPerson" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label fw-bold">Triple Sharing – Rs.</label>
+                                    <input asp-for="TripleSharingChargePerPerson" type="number" min="0" class="form-control" placeholder="Leave blank if not offered" />
+                                    <span asp-validation-for="TripleSharingChargePerPerson" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted">Shared (Min 4 pax) = no extra charge (default). Fill only the room types you want to offer.</small>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label asp-for="Exclusions" class="control-label"></label>
                     <textarea asp-for="Exclusions" class="form-control" rows="2"></textarea>
