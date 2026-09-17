@@ -118,10 +118,23 @@
                 <span asp-validation-for="Inclusions" class="text-danger"></span>
             </div>
 
-            <div class="form-group mb-2">
-                <label class="control-label fw-bold">Family Room Charges (per person) – Rs.</label>
-                <input asp-for="FamilyRoomChargePerPerson" type="number" min="0" class="form-control" placeholder="e.g. 500" />
-                <span asp-validation-for="FamilyRoomChargePerPerson" class="text-danger"></span>
+            <%-- Sharing charges — hidden automatically when IsCar is ticked --%>
+            <div id="sharingChargesSection">
+                <div class="form-group mb-2">
+                    <label class="control-label fw-bold">Single Sharing Charge (per person) – Rs.</label>
+                    <input asp-for="SingleSharingChargePerPerson" type="number" min="0" class="form-control" placeholder="e.g. 800" />
+                    <span asp-validation-for="SingleSharingChargePerPerson" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label fw-bold">Double Sharing Charge (per person) – Rs.</label>
+                    <input asp-for="DoubleSharingChargePerPerson" type="number" min="0" class="form-control" placeholder="e.g. 600" />
+                    <span asp-validation-for="DoubleSharingChargePerPerson" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label fw-bold">Triple Sharing Charge (per person) – Rs.</label>
+                    <input asp-for="TripleSharingChargePerPerson" type="number" min="0" class="form-control" placeholder="e.g. 400" />
+                    <span asp-validation-for="TripleSharingChargePerPerson" class="text-danger"></span>
+                </div>
             </div>
 
             <div class="form-group mb-2">
@@ -152,6 +165,7 @@
         var isCar = document.getElementById('isCarCheckbox').checked;
         document.getElementById('carFields').style.display = isCar ? '' : 'none';
         document.getElementById('busFields').style.display = isCar ? 'none' : '';
+        document.getElementById('sharingChargesSection').style.display = isCar ? 'none' : '';
     }
 
     $(document).ready(function () {
