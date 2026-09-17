@@ -85,8 +85,23 @@ namespace AshtavinayakAPP.Controllers
                 agent.MobileNumber,
                 agent.Address,
                 agent.ApprovalStatus,
-                agent.IsActive
+                agent.IsActive,
+                agent.CommissionPercentage,
             });
+        }
+
+        // GET: api/Agent/MyBookings
+        // Returns all bookings finalized by the logged-in agent with full tour + commission details.
+        [Authorize(Roles = "Agent")]
+        [HttpGet("MyBookings")]
+        public async Task<IActionResult> MyBookings()
+        {
+            var agentId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            if (!int.TryParse(agentId, out var id))
+                return Unauthorized();
+
+            var bookings = await _agentService.GetMyBookingsAsync(id);
+            return Ok(new { Message = "Bookings fetched.", Data = bookings, Count = bookings.Count });
         }
     }
 }

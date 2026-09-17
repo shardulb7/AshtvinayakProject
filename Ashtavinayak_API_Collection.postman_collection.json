@@ -1,0 +1,805 @@
+{
+  "info": {
+    "name": "Ashtavinayak Travel API",
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "Complete API collection for the Ashtavinayak Travel App backend.\n\n## Setup\n1. Import this collection into Postman.\n2. Import the companion environment file `Ashtavinayak_Environment.json`.\n3. Select the environment from the top-right dropdown.\n4. Run **User: Register** → **User: Request OTP** → **User: Verify OTP** to get a `customer_token`.\n5. OR run **Agent: Login** to get an `agent_token`.\n\n## Auth\n- Customer endpoints use `{{customer_token}}`\n- Agent endpoints use `{{agent_token}}`\n- The collection is pre-configured — tokens are auto-set after login/verify steps.\n\n## Base URL\nAll requests use `{{base_url}}` — set to the live Azure URL in the environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [],
+  "item": [
+    {
+      "name": "🏥 Health & Status",
+      "item": [
+        {
+          "name": "Health — Liveness (no auth)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/live",
+              "host": ["{{base_url}}"],
+              "path": ["health", "live"]
+            },
+            "description": "Process liveness check. Returns 200 Healthy if the app process is running. No auth required. Use this to check if the server is up."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains Healthy', () => pm.expect(pm.response.text()).to.include('Healthy'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health — Readiness (no auth)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/ready",
+              "host": ["{{base_url}}"],
+              "path": ["health", "ready"]
+            },
+            "description": "Readiness check — includes database connectivity. Returns 200 Healthy only when the app AND database are both working. No auth required."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains Healthy', () => pm.expect(pm.response.text()).to.include('Healthy'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "👤 User — Auth",
+      "description": "Customer registration and OTP-based login flow.\n\nFlow: Register → Request OTP → Verify OTP → Use returned token.",
+      "item": [
+        {
+          "name": "1. Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"Test User\",\n  \"email\": \"testuser@example.com\",\n  \"phoneNumber\": \"9000000001\",\n  \"passwordHash\": \"Pass@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/User/Register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "User", "Register"]
+            },
+            "description": "Register a new customer account.\n\n**No auth required.**\n\n**Success (200):**\n```json\n{ \"message\": \"User registered successfully!\" }\n```\n\n**Failure (409):** Email or phone already registered.\n\n**Note:** `passwordHash` field name is misleading — send the plain password here, the server hashes it."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Register succeeds or conflicts', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Request OTP (Login Step 1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobileNo\": \"9000000001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/User/LoginByOTP",
+              "host": ["{{base_url}}"],
+              "path": ["api", "User", "LoginByOTP"]
+            },
+            "description": "Step 1 of login. Sends an OTP to the registered mobile number via SMS.\n\n**No auth required.**\n\n**Success (200):**\n```json\n{ \"message\": \"OTP sent successfully to your mobile.\" }\n```\n\n**Failure (404):** Mobile not registered — register first.\n\n⚠️ OTP is valid for **5 minutes**. In Production the OTP comes via SMS only — there is NO `devOnlyOtp` field in the response (that only appears in Development environment)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('OTP request returns 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Verify OTP (Login Step 2 — gets token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobileNo\": \"9000000001\",\n  \"oTP\": \"{{otp_from_sms}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/User/VerifyOTP",
+              "host": ["{{base_url}}"],
+              "path": ["api", "User", "VerifyOTP"]
+            },
+            "description": "Step 2 of login. Submit the OTP received via SMS.\n\n**No auth required.**\n\n**Success (200):**\n```json\n{\n  \"message\": \"OTP verified successfully.\",\n  \"token\": \"eyJhbGciOiJIUzI1...\",\n  \"user\": {\n    \"userId\": 1,\n    \"userName\": \"Test User\",\n    \"email\": \"testuser@example.com\",\n    \"phoneNumber\": \"9000000001\",\n    \"role\": \"User\"\n  }\n}\n```\n\nThe `token` is valid for **24 hours**. Set it as `{{customer_token}}` in your environment.\n\n**Failure (400):** Invalid OTP, expired OTP."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.token) {",
+                  "    pm.environment.set('customer_token', json.token);",
+                  "    pm.environment.set('user_id', json.user.userId);",
+                  "    console.log('✅ customer_token saved to environment');",
+                  "  }",
+                  "}",
+                  "pm.test('OTP verify returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Token is present', () => pm.expect(pm.response.json()).to.have.property('token'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🏢 Agent — Auth & Profile",
+      "description": "Agent registration (with documents), login, and profile.\n\nNote: Agent accounts require admin approval before they can log in.",
+      "item": [
+        {
+          "name": "Agent: Register (multipart/form-data)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "FullName", "value": "Ramesh Kumar", "type": "text" },
+                { "key": "BusinessName", "value": "Kumar Travels", "type": "text" },
+                { "key": "MobileNumber", "value": "9876543210", "type": "text" },
+                { "key": "Email", "value": "ramesh@example.com", "type": "text" },
+                { "key": "Address", "value": "123 MG Road, Pune", "type": "text" },
+                { "key": "Password", "value": "AgentPass@1", "type": "text" },
+                { "key": "ConfirmPassword", "value": "AgentPass@1", "type": "text" },
+                { "key": "AadhaarDocument", "src": "", "type": "file", "description": "PDF/JPG/PNG, max 5MB" },
+                { "key": "ShopActLicense", "src": "", "type": "file", "description": "PDF/JPG/PNG, max 5MB" },
+                { "key": "UdyamCertificate", "src": "", "type": "file", "description": "PDF/JPG/PNG, max 5MB" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Agent/Register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Agent", "Register"]
+            },
+            "description": "Register as an agent with KYC documents.\n\n**No auth required.**\n\nUse `multipart/form-data` — NOT JSON (because of file uploads).\n\n**In Postman:** Select each file field and attach an actual file from your system.\n\n**Success (200):**\n```json\n{\n  \"message\": \"Registration submitted. Your account is pending admin approval.\",\n  \"data\": { \"agentId\": 14 }\n}\n```\n\n**After registration:** The agent cannot log in until an admin approves the account via the Admin Panel at https://ashtavinayak-api.azurewebsites.net/"
+          },
+          "response": []
+        },
+        {
+          "name": "Agent: Login (gets agent_token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobileOrEmail\": \"9876543210\",\n  \"password\": \"AgentPass@1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Agent/Login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Agent", "Login"]
+            },
+            "description": "Login as an approved agent.\n\n**No auth required.**\n\n⚠️ **Rate limited:** 5 attempts per 15 minutes. Returns **HTTP 429** if exceeded.\n\n**Success (200):**\n```json\n{\n  \"message\": \"Login successful.\",\n  \"data\": {\n    \"token\": \"eyJhbGciOiJIUzI1...\",\n    \"agent\": {\n      \"agentId\": 14,\n      \"fullName\": \"Ramesh Kumar\",\n      \"businessName\": \"Kumar Travels\",\n      \"email\": \"ramesh@example.com\",\n      \"mobileNumber\": \"9876543210\"\n    }\n  }\n}\n```\n\n**Failure (401) messages:**\n- `\"Your registration is still pending admin approval.\"`\n- `\"Your registration has been rejected.\"`\n- `\"Your account has been deactivated.\"`\n- `\"Invalid credentials.\"`"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.token) {",
+                  "    pm.environment.set('agent_token', json.data.token);",
+                  "    pm.environment.set('agent_id', json.data.agent.agentId);",
+                  "    console.log('✅ agent_token saved to environment');",
+                  "  }",
+                  "}",
+                  "pm.test('Agent login returns 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Agent: Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{agent_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/Agent/Profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Agent", "Profile"]
+            },
+            "description": "Get the logged-in agent's profile.\n\n**Requires:** Agent JWT token.\n\n**Success (200):**\n```json\n{\n  \"agentId\": 14,\n  \"fullName\": \"Ramesh Kumar\",\n  \"businessName\": \"Kumar Travels\",\n  \"email\": \"ramesh@example.com\",\n  \"mobileNumber\": \"9876543210\",\n  \"address\": \"123 MG Road, Pune\",\n  \"approvalStatus\": \"Approved\",\n  \"isActive\": true\n}\n```"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has agentId', () => pm.expect(pm.response.json()).to.have.property('agentId'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Agent: Resolve Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{agent_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Suresh Patil\",\n  \"customerPhone\": \"9123456789\",\n  \"customerEmail\": \"suresh@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Agent/ResolveCustomer",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Agent", "ResolveCustomer"]
+            },
+            "description": "Look up a customer by phone number, or create them if they don't exist. Used by agents before creating a booking on behalf of a walk-in customer.\n\n**Requires:** Agent JWT token.\n\n`customerEmail` is optional.\n\n**Success (200) — existing customer:**\n```json\n{\n  \"message\": \"Existing customer found.\",\n  \"userId\": 231,\n  \"customerName\": \"Suresh Patil\"\n}\n```\n\n**Success (200) — new customer created:**\n```json\n{\n  \"message\": \"Customer created.\",\n  \"userId\": 232,\n  \"customerName\": \"Suresh Patil\"\n}\n```\n\nUse the returned `userId` as the `userId` field in `CreateBookingWithSeats`."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.environment.set('resolved_user_id', json.userId);",
+                  "  console.log('Resolved userId:', json.userId);",
+                  "}",
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🗺️ Tour Destinations",
+      "item": [
+        {
+          "name": "Get Tour Destination List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/TourDestinationApi/GetTourDestinationList",
+              "host": ["{{base_url}}"],
+              "path": ["api", "TourDestinationApi", "GetTourDestinationList"]
+            },
+            "description": "Get all available tour destinations/categories with their trips.\n\n**Requires:** Any valid JWT (customer or agent).\n\nUse this to display the list of tours to the customer, and to get `tripId` values for booking."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "💺 Seats",
+      "item": [
+        {
+          "name": "Get Available Seats for Trip",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/BookingSeat/GetAvailableSeats/{{trip_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "BookingSeat", "GetAvailableSeats", "{{trip_id}}"]
+            },
+            "description": "Get list of available seat numbers for a given trip.\n\n**Requires:** Any valid JWT.\n\n**Success (200):** Array of available seat numbers, e.g. `[1, 2, 5, 8, 12]`\n\nReplace `{{trip_id}}` with a real trip ID from the Tour Destination List response."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Booked Seats for Trip",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/BookingSeat/ByTrip/{{trip_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "BookingSeat", "ByTrip", "{{trip_id}}"]
+            },
+            "description": "Get list of already-booked seat numbers for a trip (useful for showing a seat map).\n\n**Requires:** Any valid JWT.\n\n**Success (200):**\n```json\n{\n  \"message\": \"Booked seats fetched successfully.\",\n  \"data\": [\"A1\", \"A2\", \"B3\"]\n}\n```\n\n**404:** No seats booked yet for this trip."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Booking",
+      "description": "Creating, managing, and viewing bookings.",
+      "item": [
+        {
+          "name": "Create Booking — Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{user_id}},\n  \"tripId\": {{trip_id}},\n  \"pickupPointId\": 1,\n  \"noOfSeats\": 2,\n  \"seatNumbers\": [\"A1\", \"A2\"],\n  \"advance\": 1000,\n  \"totalPayment\": 5000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Booking/CreateBookingWithSeats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Booking", "CreateBookingWithSeats"]
+            },
+            "description": "Create a seat booking for a customer.\n\n**Requires:** Customer JWT token.\n\n⚠️ `totalPayment` is **ignored** — the server calculates the actual price from the trip's package rates. Only `advance` is taken from the request.\n\n**Success (200):**\n```json\n{\n  \"message\": \"Booking and seats saved successfully.\",\n  \"data\": { \"bookingId\": 5021 }\n}\n```\n\n**Failure (400):** Seat already booked, advance exceeds calculated total, invalid tripId, etc."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.bookingId) {",
+                  "    pm.environment.set('booking_id', json.data.bookingId);",
+                  "    console.log('✅ booking_id saved:', json.data.bookingId);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Booking — Agent (on behalf of customer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{agent_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{resolved_user_id}},\n  \"tripId\": {{trip_id}},\n  \"pickupPointId\": 1,\n  \"noOfSeats\": 2,\n  \"seatNumbers\": [\"B1\", \"B2\"],\n  \"advance\": 1000,\n  \"totalPayment\": 5000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Booking/CreateBookingWithSeats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Booking", "CreateBookingWithSeats"]
+            },
+            "description": "Same endpoint as customer booking, but called with an **Agent JWT**.\n\nThe server detects the agent from the token and automatically calculates commission.\n\n**Requires:** Agent JWT token.\n\n`userId` = the customer being booked for (get from `ResolveCustomer` first).\n\n**Success (200) — agent booking has extra commission fields:**\n```json\n{\n  \"message\": \"Booking and seats saved successfully.\",\n  \"data\": {\n    \"bookingId\": 5022,\n    \"totalPayment\": 9000,\n    \"commissionPercentage\": 10,\n    \"commissionAmount\": 900,\n    \"agentPayable\": 8100\n  }\n}\n```\n\n`agentPayable` = amount the agent should collect from the customer."
+          },
+          "response": []
+        },
+        {
+          "name": "Book Car (Family Booking)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{user_id}},\n  \"tripId\": {{trip_id}},\n  \"pickupPointId\": 1,\n  \"numberOfPassengers\": 4,\n  \"advance\": 2000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Booking/BookCar",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Booking", "BookCar"]
+            },
+            "description": "Book a private car/family vehicle for a trip.\n\n**Requires:** Customer JWT token.\n\n⚠️ Agent bookings are NOT supported for car bookings in this phase."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Payment (Post Razorpay)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": {{booking_id}},\n  \"userId\": {{user_id}},\n  \"amount\": 1000,\n  \"paymentMethod\": \"Razorpay\",\n  \"paymentStatus\": \"Paid\",\n  \"transactionDate\": \"2026-09-09T10:00:00Z\",\n  \"razorpayOrderId\": \"order_XXXXXXXXXX\",\n  \"razorpayPaymentId\": \"pay_XXXXXXXXXX\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Booking/UpdatePayment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Booking", "UpdatePayment"]
+            },
+            "description": "Record a payment transaction after Razorpay payment is completed.\n\n**Requires:** Any valid JWT.\n\nCall this AFTER getting a successful Razorpay payment response on the frontend.\n\n**Success (200):**\n```json\n{\n  \"message\": \"Payment updated successfully.\",\n  \"data\": {\n    \"totalPaid\": 2000,\n    \"pendingAmount\": 3000\n  }\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Booking History — By User",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/Booking/HistoryByUser/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Booking", "HistoryByUser", "{{user_id}}"]
+            },
+            "description": "Get seat booking history for a specific user.\n\n**Requires:** Any valid JWT."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Family Booking History — By User",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/Booking/FamilyBookingHistory/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Booking", "FamilyBookingHistory", "{{user_id}}"]
+            },
+            "description": "Get car/family booking history for a specific user.\n\n**Requires:** Any valid JWT."
+          },
+          "response": []
+        },
+        {
+          "name": "Download Invoice",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/Booking/DownLoadInvoice/{{booking_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Booking", "DownLoadInvoice", "{{booking_id}}"]
+            },
+            "description": "Get invoice data for a booking.\n\n**Requires:** Any valid JWT.\n\nReturns invoice details that can be used to generate a PDF on the frontend, or the backend may return a PDF stream."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💳 Payments — Razorpay",
+      "item": [
+        {
+          "name": "Create Razorpay Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1000,\n  \"currency\": \"INR\",\n  \"receipt\": \"booking_5021\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/RazorPay/CreateRazorPayOrder",
+              "host": ["{{base_url}}"],
+              "path": ["api", "RazorPay", "CreateRazorPayOrder"]
+            },
+            "description": "Create a Razorpay payment order.\n\n**Requires:** Any valid JWT.\n\n**Flow:**\n1. Call this to get an `orderId` from Razorpay\n2. Use the `orderId` to open the Razorpay checkout on frontend\n3. After payment, call `POST /api/Booking/UpdatePayment` with the transaction details\n\n**Success (200):**\n```json\n{\n  \"message\": \"Order created successfully.\",\n  \"data\": {\n    \"orderId\": \"order_XXXXXXXXXX\",\n    \"amount\": 100000,\n    \"currency\": \"INR\"\n  }\n}\n```\n\n⚠️ `amount` is in **paise** (₹10 = 1000 paise). Send `1000` for ₹1000."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧾 Transactions",
+      "item": [
+        {
+          "name": "Get My Transactions (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/Transaction?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Transaction"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "description": "Get paginated transaction list.\n\n**Requires:** Any valid JWT.\n\n**Scoping:** Regular users only see their own transactions. Admins see all.\n\n**Success (200):**\n```json\n{\n  \"message\": \"Transactions fetched successfully.\",\n  \"totalCount\": 42,\n  \"totalPages\": 3,\n  \"currentPage\": 1,\n  \"pageSize\": 20,\n  \"data\": [\n    {\n      \"transactionId\": 1,\n      \"bookingCode\": \"BK-20260901-001\",\n      \"userName\": \"Test User\",\n      \"amount\": 1000,\n      \"transactionDate\": \"2026-09-01T10:00:00Z\",\n      \"paymentStatus\": \"Paid\",\n      \"paymentMethod\": \"Razorpay\"\n    }\n  ]\n}\n```\n\n`pageSize` max is 100."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has pagination fields', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('totalCount');",
+                  "  pm.expect(json).to.have.property('data');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Transaction by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/Transaction/{{transaction_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Transaction", "{{transaction_id}}"]
+            },
+            "description": "Get a single transaction by ID.\n\n**Requires:** Any valid JWT.\n\n**Scoping:** Users can only fetch their own transactions. Returns 404 if the ID belongs to another user (not a 403 — intentional, to avoid revealing that the ID exists)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📍 Pickup Points",
+      "item": [
+        {
+          "name": "Get Pickup Points by City",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/Pickup/city/{{city_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Pickup", "city", "{{city_id}}"]
+            },
+            "description": "Get all pickup points for a given city.\n\n**Requires:** Any valid JWT.\n\n**Success (200):**\n```json\n{\n  \"message\": \"Pickup points fetched successfully.\",\n  \"data\": [\n    {\n      \"pickupPointName\": \"Swargate Bus Stand\",\n      \"cityName\": \"Pune\",\n      \"pickupPointID\": 1,\n      \"time\": \"06:00:00\"\n    }\n  ]\n}\n```"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔴 Error Scenarios",
+      "description": "Tests for expected error responses. Use these to verify error handling.",
+      "item": [
+        {
+          "name": "Auth — Missing Token (expect 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/TourDestinationApi/GetTourDestinationList",
+              "host": ["{{base_url}}"],
+              "path": ["api", "TourDestinationApi", "GetTourDestinationList"]
+            },
+            "description": "Calling a protected endpoint without any Authorization header.\n\n**Expected:** 401 Unauthorized"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('Returns 401 without token', () => pm.response.to.have.status(401));"],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auth — Invalid Token (expect 401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer this_is_not_a_real_token" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/TourDestinationApi/GetTourDestinationList",
+              "host": ["{{base_url}}"],
+              "path": ["api", "TourDestinationApi", "GetTourDestinationList"]
+            },
+            "description": "**Expected:** 401 Unauthorized with an invalid/tampered JWT."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('Returns 401 with bad token', () => pm.response.to.have.status(401));"],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "User Register — Missing Fields (expect 400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/User/Register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "User", "Register"]
+            },
+            "description": "**Expected:** 400 Bad Request with validation errors."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('Returns 400 for empty body', () => pm.response.to.have.status(400));"],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "OTP — Wrong OTP (expect 400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobileNo\": \"9000000001\",\n  \"oTP\": \"000000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/User/VerifyOTP",
+              "host": ["{{base_url}}"],
+              "path": ["api", "User", "VerifyOTP"]
+            },
+            "description": "**Expected:** 400 Bad Request — `\"Invalid OTP or OTP expired.\"`"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('Returns 400 for wrong OTP', () => pm.response.to.have.status(400));"],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Agent Login — Wrong Password (expect 401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobileOrEmail\": \"9876543210\",\n  \"password\": \"WrongPassword1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Agent/Login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Agent", "Login"]
+            },
+            "description": "**Expected:** 401 Unauthorized — `\"Invalid credentials.\"`"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('Returns 401 for wrong password', () => pm.response.to.have.status(401));"],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer Token on Agent Endpoint (expect 403/401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/Agent/Profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Agent", "Profile"]
+            },
+            "description": "Calling an Agent-only endpoint with a Customer token.\n\n**Expected:** 403 Forbidden (customer JWT has role=User, not Agent)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('Customer cannot access Agent endpoint', () => pm.response.to.have.status(403));"],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

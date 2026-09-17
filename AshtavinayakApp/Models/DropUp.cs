@@ -13,6 +13,8 @@ public partial class DropUp
 
     public int? PackageId { get; set; }
 
+    public TimeOnly? Time { get; set; }
+
     public bool IsDeleted { get; set; }
 
     public virtual City? City { get; set; }

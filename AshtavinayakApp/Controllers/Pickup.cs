@@ -220,6 +220,158 @@ namespace AshtavinayakAPP.Controllers
         {
             return _context.PickupPoints.Any(e => e.PickupPointId == id && !e.IsDeleted);
         }
+
+        // ─── Package-based Pickup Endpoints ───────────────────────────────────────
+
+        // GET: api/Pickup/package/{packageId}
+        // Returns all pickup points for a specific package (with time).
+        [HttpGet("package/{packageId}")]
+        public async Task<ActionResult<object>> GetPickupsByPackage(int packageId)
+        {
+            try
+            {
+                var pickups = await _context.PickupPoints
+                    .Where(p => p.PackageId == packageId && !p.IsDeleted)
+                    .Select(p => new
+                    {
+                        PickupPointId   = p.PickupPointId,
+                        PickupPointName = p.PickupPoint1,
+                        Time            = p.Time,
+                        CityId          = p.CityId,
+                        PackageId       = p.PackageId,
+                    })
+                    .OrderBy(p => p.Time)
+                    .ToListAsync();
+
+                return Ok(new { Message = "Pickup points fetched.", Data = pickups });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetPickupsByPackage failed for PackageId={PackageId}", packageId);
+                return StatusCode(500, "An unexpected error occurred.");
+            }
+        }
+
+        // POST: api/Pickup/BulkCreate
+        // Create multiple pickup points for a package in one call.
+        // Body: { "cityId": 1, "packageId": 9, "pickupPoints": [{ "pickupPointName": "Pune", "time": "05:30" }] }
+        [Authorize(Roles = "Admin")]
+        [HttpPost("BulkCreate")]
+        public async Task<ActionResult<object>> BulkCreatePickups([FromBody] BulkPickupRequest request)
+        {
+            try
+            {
+                if (request?.PickupPoints == null || !request.PickupPoints.Any())
+                    return BadRequest("At least one pickup point is required.");
+
+                var entities = request.PickupPoints.Select(p => new PickupPoint
+                {
+                    CityId       = request.CityId,
+                    PackageId    = request.PackageId,
+                    PickupPoint1 = p.PickupPointName,
+                    Time         = p.Time.HasValue ? TimeOnly.FromTimeSpan(p.Time.Value) : null,
+                    IsDeleted    = false,
+                }).ToList();
+
+                _context.PickupPoints.AddRange(entities);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = $"{entities.Count} pickup point(s) created.", Data = entities.Select(e => e.PickupPointId) });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BulkCreatePickups failed");
+                return StatusCode(500, "An unexpected error occurred.");
+            }
+        }
+
+        // ─── Drop Point Endpoints ──────────────────────────────────────────────────
+
+        // GET: api/Pickup/DropPoints/package/{packageId}
+        [HttpGet("DropPoints/package/{packageId}")]
+        public async Task<ActionResult<object>> GetDropPointsByPackage(int packageId)
+        {
+            try
+            {
+                var drops = await _context.DropUps
+                    .Where(d => d.PackageId == packageId && !d.IsDeleted)
+                    .Select(d => new
+                    {
+                        DroppointId = d.DroppointId,
+                        DropPoint   = d.DropPoint,
+                        Time        = d.Time,
+                        CityId      = d.CityId,
+                        PackageId   = d.PackageId,
+                    })
+                    .OrderBy(d => d.Time)
+                    .ToListAsync();
+
+                return Ok(new { Message = "Drop points fetched.", Data = drops });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetDropPointsByPackage failed for PackageId={PackageId}", packageId);
+                return StatusCode(500, "An unexpected error occurred.");
+            }
+        }
+
+        // POST: api/Pickup/DropPoints/BulkCreate
+        // Body: { "cityId": 1, "packageId": 9, "dropPoints": [{ "dropPointName": "Pune", "time": "21:00" }] }
+        [Authorize(Roles = "Admin")]
+        [HttpPost("DropPoints/BulkCreate")]
+        public async Task<ActionResult<object>> BulkCreateDropPoints([FromBody] BulkDropRequest request)
+        {
+            try
+            {
+                if (request?.DropPoints == null || !request.DropPoints.Any())
+                    return BadRequest("At least one drop point is required.");
+
+                var entities = request.DropPoints.Select(d => new DropUp
+                {
+                    CityId    = request.CityId,
+                    PackageId = request.PackageId,
+                    DropPoint = d.DropPointName,
+                    Time      = d.Time.HasValue ? TimeOnly.FromTimeSpan(d.Time.Value) : null,
+                    IsDeleted = false,
+                }).ToList();
+
+                _context.DropUps.AddRange(entities);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = $"{entities.Count} drop point(s) created.", Data = entities.Select(e => e.DroppointId) });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BulkCreateDropPoints failed");
+                return StatusCode(500, "An unexpected error occurred.");
+            }
+        }
     }
 }
 
+// ─── Request DTOs for bulk pickup/drop creation ────────────────────────────────
+public class BulkPickupRequest
+{
+    public int CityId { get; set; }
+    public int PackageId { get; set; }
+    public List<PickupPointEntry> PickupPoints { get; set; } = new();
+}
+
+public class PickupPointEntry
+{
+    public string PickupPointName { get; set; } = string.Empty;
+    public TimeSpan? Time { get; set; }
+}
+
+public class BulkDropRequest
+{
+    public int CityId { get; set; }
+    public int PackageId { get; set; }
+    public List<DropPointEntry> DropPoints { get; set; } = new();
+}
+
+public class DropPointEntry
+{
+    public string DropPointName { get; set; } = string.Empty;
+    public TimeSpan? Time { get; set; }
+}

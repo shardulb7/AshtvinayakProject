@@ -16,5 +16,7 @@ namespace AshtavinayakAPP.Services.AgentSrc
         Task<(bool Success, string Message)> UpdateCommissionOverrideAsync(int agentId, decimal? commissionPercentage);
 
         Task<decimal> GetEffectiveCommissionAsync(int agentId);
+
+        Task<List<object>> GetMyBookingsAsync(int agentId);
     }
 }

@@ -29,6 +29,15 @@ public partial class Package
 
     public int? FamilyRoomChargePerPerson { get; set; }
 
+    // Room-type sharing charges — per person, added on top of base adult price.
+    // Shared (default) = no extra charge.
+    // FamilyRoomChargePerPerson is kept for backward compat (car/family bookings).
+    public int? SingleSharingChargePerPerson { get; set; }
+
+    public int? DoubleSharingChargePerPerson { get; set; }
+
+    public int? TripleSharingChargePerPerson { get; set; }
+
     public string? CarType { get; set; }
 
     public string? Itinerary { get; set; }

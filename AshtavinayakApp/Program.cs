@@ -320,6 +320,30 @@ var schemaSqls = new[]
                     WHERE TABLE_NAME='Packages' AND COLUMN_NAME='FamilyRoomChargePerPerson')
          ALTER TABLE [dbo].[Packages] ADD [FamilyRoomChargePerPerson] INT NULL;
      """),
+    ("SingleSharingChargePerPerson on Packages",
+     """
+     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='Packages' AND COLUMN_NAME='SingleSharingChargePerPerson')
+         ALTER TABLE [dbo].[Packages] ADD [SingleSharingChargePerPerson] INT NULL;
+     """),
+    ("DoubleSharingChargePerPerson on Packages",
+     """
+     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='Packages' AND COLUMN_NAME='DoubleSharingChargePerPerson')
+         ALTER TABLE [dbo].[Packages] ADD [DoubleSharingChargePerPerson] INT NULL;
+     """),
+    ("TripleSharingChargePerPerson on Packages",
+     """
+     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='Packages' AND COLUMN_NAME='TripleSharingChargePerPerson')
+         ALTER TABLE [dbo].[Packages] ADD [TripleSharingChargePerPerson] INT NULL;
+     """),
+    ("Time on DropUp",
+     """
+     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='DropUp' AND COLUMN_NAME='Time')
+         ALTER TABLE [dbo].[DropUp] ADD [Time] TIME NULL;
+     """),
     ("PackageId on DropUp",           // table is 'DropUp' not 'DropUps'
      """
      IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS

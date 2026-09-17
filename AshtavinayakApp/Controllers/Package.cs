@@ -72,6 +72,10 @@ namespace AshtavinayakAPP.Controllers
                     Child3To8YrsWithSeat = package.Child3To8YrswithSeat,
                     Child3To8YrsWithoutSeat = package.Child3To8YrsWithoutSeat,
                     FamilyRoomChargePerPerson = package.FamilyRoomChargePerPerson,
+                    // Room-type sharing charges (per person, on top of AdultPrice)
+                    SingleSharingChargePerPerson = package.SingleSharingChargePerPerson,
+                    DoubleSharingChargePerPerson = package.DoubleSharingChargePerPerson,
+                    TripleSharingChargePerPerson = package.TripleSharingChargePerPerson,
                     IsCar = package.IsCar,
                     CarPackagePrice = package.CarPackagePrice,
                     PkgPersonCount = package.PkgPersonCount,
