@@ -256,5 +256,47 @@ namespace AshtavinayakAPP.Services.AgentSrc
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        // GET: api/Agent/MyBookings — returns all bookings finalized by this agent
+        public async Task<List<object>> GetMyBookingsAsync(int agentId)
+        {
+            var bookings = await _context.Bookings
+                .Where(b => b.AgentId == agentId && !b.IsDeleted)
+                .Include(b => b.User)
+                .Include(b => b.Trip)
+                    .ThenInclude(t => t!.Package)
+                .ToListAsync();
+
+            var result = new List<object>();
+
+            foreach (var b in bookings)
+            {
+                // Sum seats from BookingSeat records for this booking
+                var seat = await _context.BookingSeats
+                    .Where(s => s.BookingId == b.BookingId && !s.IsDeleted)
+                    .FirstOrDefaultAsync();
+
+                int totalSeats = (seat?.Adults ?? 0)
+                               + (seat?.Childwithseat ?? 0)
+                               + (seat?.Childwithoutseat ?? 0);
+
+                result.Add(new
+                {
+                    BookingId            = b.BookingId,
+                    BookingDate          = b.BookingDate,
+                    CustomerName         = b.User?.UserName ?? "—",
+                    CustomerContact      = b.User?.PhoneNumber ?? "—",
+                    TourName             = b.Trip?.TourName ?? b.Trip?.Package?.PackageName ?? "—",
+                    TourDate             = b.Trip?.TripDate,
+                    TotalSeats           = totalSeats,
+                    AmountCollected      = b.TotalPayment,
+                    CommissionPercentage = b.CommissionPercentage,
+                    CommissionAmount     = b.CommissionAmount,
+                    Status               = b.Status,
+                });
+            }
+
+            return result;
+        }
     }
 }
