@@ -78,7 +78,7 @@ namespace AshtavinayakAPP.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PackageId,PackageName,Duration,CategoryId,CityId,Inclusions,Exclusions,AdultPrice,Child3To8YrswithSeat,Child3To8YrsWithoutSeat,PkgPersonCount,IsCar,CarType,Itinerary,CarTotalSeat,CarPackagePrice,FamilyRoomChargePerPerson")] Package package)
+        public async Task<IActionResult> Create([Bind("PackageId,PackageName,Duration,CategoryId,CityId,Inclusions,Exclusions,AdultPrice,Child3To8YrswithSeat,Child3To8YrsWithoutSeat,PkgPersonCount,IsCar,CarType,Itinerary,CarTotalSeat,CarPackagePrice,FamilyRoomChargePerPerson,SingleSharingChargePerPerson,DoubleSharingChargePerPerson,TripleSharingChargePerPerson")] Package package)
         {
             if (ModelState.IsValid)
             {
@@ -114,7 +114,7 @@ namespace AshtavinayakAPP.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("PackageId,PackageName,Duration,CategoryId,CityId,Inclusions,Exclusions,AdultPrice,Child3To8YrswithSeat,Child3To8YrsWithoutSeat,PkgPersonCount,IsCar,CarType,Itinerary,CarTotalSeat,CarPackagePrice,FamilyRoomChargePerPerson")] Package package)
+        public async Task<IActionResult> Edit(int id, [Bind("PackageId,PackageName,Duration,CategoryId,CityId,Inclusions,Exclusions,AdultPrice,Child3To8YrswithSeat,Child3To8YrsWithoutSeat,PkgPersonCount,IsCar,CarType,Itinerary,CarTotalSeat,CarPackagePrice,FamilyRoomChargePerPerson,SingleSharingChargePerPerson,DoubleSharingChargePerPerson,TripleSharingChargePerPerson")] Package package)
         {
             if (id != package.PackageId)
             {
