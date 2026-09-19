@@ -70,6 +70,7 @@ namespace AshtavinayakAPP.Controllers
         {
             ViewData["CategoryId"] = new SelectList(_context.Categories.Where(x => !x.IsDeleted), "CategoryId", "CategoryName");
             ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName");
+            ViewData["DestinationId"] = new SelectList(_context.TourDestinations.Where(x => !x.IsDeleted), "Id", "DestinationName");
             return View();
         }
 
@@ -78,7 +79,7 @@ namespace AshtavinayakAPP.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PackageId,PackageName,Duration,CategoryId,CityId,Inclusions,Exclusions,AdultPrice,Child3To8YrswithSeat,Child3To8YrsWithoutSeat,PkgPersonCount,IsCar,CarType,Itinerary,CarTotalSeat,CarPackagePrice,FamilyRoomChargePerPerson,SingleSharingChargePerPerson,DoubleSharingChargePerPerson,TripleSharingChargePerPerson")] Package package)
+        public async Task<IActionResult> Create([Bind("PackageId,PackageName,Duration,CategoryId,CityId,Inclusions,Exclusions,AdultPrice,Child3To8YrswithSeat,Child3To8YrsWithoutSeat,PkgPersonCount,IsCar,CarType,Itinerary,CarTotalSeat,CarPackagePrice,FamilyRoomChargePerPerson,SingleSharingChargePerPerson,DoubleSharingChargePerPerson,TripleSharingChargePerPerson,DestinationId")] Package package)
         {
             if (ModelState.IsValid)
             {
@@ -88,10 +89,9 @@ namespace AshtavinayakAPP.Controllers
             }
             ViewData["CategoryId"] = new SelectList(_context.Categories.Where(x => !x.IsDeleted), "CategoryId", "CategoryName", package.CategoryId);
             ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName", package.CityId);
+            ViewData["DestinationId"] = new SelectList(_context.TourDestinations.Where(x => !x.IsDeleted), "Id", "DestinationName", package.DestinationId);
             return View(package);
         }
-
-        // GET: Packages/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -106,15 +106,14 @@ namespace AshtavinayakAPP.Controllers
             }
             ViewData["CategoryId"] = new SelectList(_context.Categories.Where(x => !x.IsDeleted), "CategoryId", "CategoryName", package.CategoryId);
             ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName", package.CityId);
+            ViewData["DestinationId"] = new SelectList(_context.TourDestinations.Where(x => !x.IsDeleted), "Id", "DestinationName", package.DestinationId);
             return View(package);
         }
-
-        // POST: Packages/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("PackageId,PackageName,Duration,CategoryId,CityId,Inclusions,Exclusions,AdultPrice,Child3To8YrswithSeat,Child3To8YrsWithoutSeat,PkgPersonCount,IsCar,CarType,Itinerary,CarTotalSeat,CarPackagePrice,FamilyRoomChargePerPerson,SingleSharingChargePerPerson,DoubleSharingChargePerPerson,TripleSharingChargePerPerson")] Package package)
+        public async Task<IActionResult> Edit(int id, [Bind("PackageId,PackageName,Duration,CategoryId,CityId,Inclusions,Exclusions,AdultPrice,Child3To8YrswithSeat,Child3To8YrsWithoutSeat,PkgPersonCount,IsCar,CarType,Itinerary,CarTotalSeat,CarPackagePrice,FamilyRoomChargePerPerson,SingleSharingChargePerPerson,DoubleSharingChargePerPerson,TripleSharingChargePerPerson,DestinationId")] Package package)
         {
             if (id != package.PackageId)
             {
@@ -143,6 +142,7 @@ namespace AshtavinayakAPP.Controllers
             }
             ViewData["CategoryId"] = new SelectList(_context.Categories.Where(x => !x.IsDeleted), "CategoryId", "CategoryName", package.CategoryId);
             ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName", package.CityId);
+            ViewData["DestinationId"] = new SelectList(_context.TourDestinations.Where(x => !x.IsDeleted), "Id", "DestinationName", package.DestinationId);
             return View(package);
         }
 

@@ -25,9 +25,9 @@ namespace AshtavinayakAPP.Controllers
             _logger = logger;
         }
         [HttpGet("GetPackageByCateGoryId")]
-        public async Task<IActionResult>GetPackageByCateGoryId(int id,bool isCarType=false)
+        public async Task<IActionResult>GetPackageByCateGoryId(int id, bool isCarType = false, int? destinationId = null)
         {
-            var data=await _packageService.GetpakageByCategoryId(id,isCarType);
+            var data = await _packageService.GetpakageByCategoryId(id, isCarType, destinationId);
             return Ok(data);
         }
 

@@ -403,6 +403,16 @@ var schemaSqls = new[]
          ALTER TABLE [dbo].[Histories] WITH CHECK CHECK CONSTRAINT ALL;
      END;
      """),
+    ("Add DestinationId to Packages (car destination filter)",
+     """
+     IF NOT EXISTS (
+         SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_NAME='Packages' AND COLUMN_NAME='DestinationId'
+     )
+     BEGIN
+         ALTER TABLE [dbo].[Packages] ADD [DestinationId] INT NULL;
+     END;
+     """),
 };
 
 try

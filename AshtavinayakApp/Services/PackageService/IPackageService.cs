@@ -4,7 +4,7 @@ namespace AshtavinayakAPP.Services.PackageService  // LOW-01: fixed typo (was Pa
 {
     public interface IPackageService
     {
-        Task<List<Package>>GetpakageByCategoryId(int  categoryId,bool isCartype);
+        Task<List<Package>>GetpakageByCategoryId(int categoryId, bool isCartype, int? destinationId = null);
         Task<List<DropUp>> GetDropPoitByCityId(int cityId);
     }
 }

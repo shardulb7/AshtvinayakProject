@@ -50,6 +50,8 @@ public partial class Package
 
     public int? PkgPersonCount { get; set; }
 
+    public int? DestinationId { get; set; }
+
     public virtual Category? Category { get; set; }
 
     public virtual City? City { get; set; }

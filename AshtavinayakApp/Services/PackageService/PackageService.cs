@@ -20,18 +20,22 @@ namespace AshtavinayakAPP.Services.PackageService
         }
 
         // Get list of packages by category ID
-        public async Task<List<Package>> GetpakageByCategoryId(int categoryId, bool isCartype)
+        public async Task<List<Package>> GetpakageByCategoryId(int categoryId, bool isCartype, int? destinationId = null)
         {
             if (isCartype)
             {
-                // Filter by Category.IsCar via subquery — avoids loading the navigation
-                // property which causes circular-reference JSON serialization failure.
-                return await _context.Packages
+                // For car packages: always use Category.IsCar=true (categoryId=7 in DB).
+                // Optionally filter by DestinationId if provided.
+                var query = _context.Packages
                     .Where(p => !p.IsDeleted
                              && _context.Categories.Any(c => c.CategoryId == p.CategoryId
                                                           && c.IsCar
-                                                          && !c.IsDeleted))
-                    .ToListAsync();
+                                                          && !c.IsDeleted));
+
+                if (destinationId.HasValue)
+                    query = query.Where(p => p.DestinationId == destinationId.Value);
+
+                return await query.ToListAsync();
             }
             else
             {
