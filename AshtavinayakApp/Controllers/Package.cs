@@ -143,67 +143,9 @@ namespace AshtavinayakAPP.Controllers
             var data= await _packageService.GetDropPoitByCityId(cityId);
             return data;
         }
-
-        // GET: api/Package/SharingCharges/{packageId}
-        // Returns the 3 sharing charge values + familyRoom for a specific package (diagnostic + FE use).
-        [HttpGet("SharingCharges/{packageId}")]
-        public async Task<IActionResult> GetSharingCharges(int packageId)
-        {
-            var pkg = await _context.Packages
-                .Where(p => p.PackageId == packageId && !p.IsDeleted)
-                .Select(p => new
-                {
-                    PackageId                   = p.PackageId,
-                    PackageName                 = p.PackageName,
-                    IsCar                       = p.IsCar,
-                    FamilyRoomChargePerPerson   = p.FamilyRoomChargePerPerson,
-                    SingleSharingChargePerPerson = p.SingleSharingChargePerPerson,
-                    DoubleSharingChargePerPerson = p.DoubleSharingChargePerPerson,
-                    TripleSharingChargePerPerson = p.TripleSharingChargePerPerson,
-                })
-                .FirstOrDefaultAsync();
-
-            if (pkg == null) return NotFound(new { Message = $"Package {packageId} not found." });
-            return Ok(pkg);
-        }
-
-        // PUT: api/Package/SharingCharges/{packageId}
-        // Updates sharing charges directly via API (Admin role required).
-        // Body: { "singleSharingChargePerPerson": 500, "doubleSharingChargePerPerson": 300, "tripleSharingChargePerPerson": 200 }
-        [Authorize(Roles = "Admin")]
-        [HttpPut("SharingCharges/{packageId}")]
-        public async Task<IActionResult> UpdateSharingCharges(int packageId, [FromBody] SharingChargeUpdateDto dto)
-        {
-            var pkg = await _context.Packages.FirstOrDefaultAsync(p => p.PackageId == packageId && !p.IsDeleted);
-            if (pkg == null) return NotFound(new { Message = $"Package {packageId} not found." });
-
-            pkg.SingleSharingChargePerPerson = dto.SingleSharingChargePerPerson;
-            pkg.DoubleSharingChargePerPerson = dto.DoubleSharingChargePerPerson;
-            pkg.TripleSharingChargePerPerson = dto.TripleSharingChargePerPerson;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new
-            {
-                Message = "Sharing charges updated successfully.",
-                PackageId = pkg.PackageId,
-                PackageName = pkg.PackageName,
-                pkg.SingleSharingChargePerPerson,
-                pkg.DoubleSharingChargePerPerson,
-                pkg.TripleSharingChargePerPerson,
-            });
-        }
-
         private bool PackageExists(int id)
         {
             return _context.Packages.Any(e => e.PackageId == id && !e.IsDeleted);
         }
     }
-}
-
-public class SharingChargeUpdateDto
-{
-    public int? SingleSharingChargePerPerson { get; set; }
-    public int? DoubleSharingChargePerPerson { get; set; }
-    public int? TripleSharingChargePerPerson { get; set; }
 }
