@@ -354,6 +354,8 @@ namespace AshtavinayakAPP.Services.BookingSrc
                     where b.UserId == userId && !b.IsDeleted
                     join p in _context.PickupPoints on b.PickupPointId equals p.PickupPointId into pp
                     from pickup in pp.DefaultIfEmpty()
+                    join u in _context.Users on b.UserId equals u.UserId into uu
+                    from user in uu.DefaultIfEmpty()
                     select new
                     {
                         b.BookingId,
@@ -371,7 +373,10 @@ namespace AshtavinayakAPP.Services.BookingSrc
                         } : null,
                         CarType = f.CarType,
                         Date = f.Date,
-                        Time = f.Time
+                        Time = f.Time,
+                        CustomerName    = user != null ? user.UserName    : null,
+                        CustomerContact = user != null ? user.PhoneNumber  : null,
+                        b.CommissionAmount
                     }
                 ).ToListAsync();
 
@@ -422,6 +427,9 @@ namespace AshtavinayakAPP.Services.BookingSrc
                         b.CarType,
                         b.Date,
                         b.Time,
+                        b.CustomerName,
+                        b.CustomerContact,
+                        CommissionAmount = b.CommissionAmount,
                         Transactions = transactions
                     };
                 }).ToList();
@@ -446,6 +454,7 @@ namespace AshtavinayakAPP.Services.BookingSrc
                     .Where(b => b.UserId == userId && b.TripId != null && !b.IsDeleted) // Exclude bookings without TripId
                     .Include(b => b.PickupPoint)
                     .Include(b => b.Trip)
+                    .Include(b => b.User)
                     .ToListAsync();
 
                 if (!bookings.Any())
@@ -495,6 +504,9 @@ namespace AshtavinayakAPP.Services.BookingSrc
                         PendingAmount = pendingAmount,
                         Droppoint = b.Droppoint,
                         PickupPointName = b.PickupPoint?.PickupPoint1 ?? "N/A",
+                        CustomerName    = b.User?.UserName,
+                        CustomerContact = b.User?.PhoneNumber,
+                        CommissionAmount = b.CommissionAmount,
                         SeatNumbers = _context.BookingSeats
                             .Where(bs => bs.BookingId == b.BookingId)
                             .Select(bs => new
