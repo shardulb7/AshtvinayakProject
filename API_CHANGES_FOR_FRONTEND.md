@@ -1,217 +1,284 @@
-# API Changes — Frontend Integration Guide
+﻿# API Changes — Frontend Integration Guide
 
-Covers everything new or changed on the backend that the frontend team needs to know about: the new Agent module, changes to the existing booking flow, and general behavior changes across the API.
+Covers everything new or changed on the backend that the frontend team needs to know about.
 
-Base URL: `http://<host>/api`
-Auth: Bearer JWT in the `Authorization` header (`Authorization: Bearer <token>`) unless noted otherwise.
-
----
-
-## 1. Agent Documents — where they live and how to access them
-
-Agent registration uploads 3 documents (Aadhaar, Shop Act License, Udyam Certificate). These are **not** stored in `wwwroot` and are **not** publicly accessible by URL — they're saved to a private folder on the server, outside the web root, with randomly generated filenames. There is no direct link you can put in an `<img src>` or similar.
-
-The only way to retrieve a document is through an authenticated admin action in the Admin Panel (`GET /Agents/DownloadDocument/{agentId}?documentType=aadhaar|shopact|udyam`), which checks the admin's session before streaming the file back. This is intentional — these are private KYC documents, so nothing about their storage or retrieval is public-facing. The frontend/customer/agent-facing apps never need to construct a URL to these files directly.
+**Base URL:** `https://ashtavinayak-api.azurewebsites.net/api`
+**Auth:** `Authorization: Bearer <token>` on every authenticated request.
 
 ---
 
-## 2. New: Agent API
+## 1. Agent Documents
 
-### 2.1 Register an agent
-`POST /api/Agent/Register`
-Content-Type: `multipart/form-data` (because of the file uploads)
+Agent registration uploads 3 documents (Aadhaar, Shop Act License, Udyam Certificate). These are **not** publicly accessible by URL — stored in a private folder outside web root. Retrieve only via Admin Panel (`GET /Agents/DownloadDocument/{agentId}?documentType=aadhaar|shopact|udyam`).
 
-| Field | Type | Notes |
+---
+
+## 2. Agent API
+
+### 2.1 Register
+`POST /api/Agent/Register` — `multipart/form-data`
+
+| Field | Type | Required |
 |---|---|---|
-| FullName | string | required |
-| BusinessName | string | required |
-| MobileNumber | string | required |
-| Email | string | required, valid email |
-| Address | string | required |
-| Password | string | required — min 8 chars, at least 1 letter + 1 digit |
-| ConfirmPassword | string | required — must match Password |
-| AadhaarDocument | file | required — PDF/JPG/PNG, max 5MB |
-| ShopActLicense | file | required — PDF/JPG/PNG, max 5MB |
-| UdyamCertificate | file | required — PDF/JPG/PNG, max 5MB |
+| FullName | string | yes |
+| BusinessName | string | yes |
+| MobileNumber | string | yes |
+| Email | string | yes |
+| Address | string | yes |
+| Password | string | yes — min 8 chars, 1 letter + 1 digit |
+| ConfirmPassword | string | yes — must match Password |
+| AadhaarDocument | file | yes — PDF/JPG/PNG max 5MB |
+| ShopActLicense | file | yes — PDF/JPG/PNG max 5MB |
+| UdyamCertificate | file | yes — PDF/JPG/PNG max 5MB |
 
-**Success (200):**
-```json
-{
-  "message": "Registration submitted. Your account is pending admin approval.",
-  "data": { "agentId": 14 }
-}
-```
+Success: `{ "message": "Registration submitted. Your account is pending admin approval.", "data": { "agentId": 14 } }`
 
-**Failure (400)** — validation error, duplicate mobile/email, wrong file type, oversized file, etc.:
-```json
-{ "message": "This mobile number is already registered." }
-```
+New agent **cannot log in** until admin approves.
 
-Note: a newly registered agent **cannot log in immediately** — an admin must review and approve the account first (see section 4).
-
-### 2.2 Agent login
+### 2.2 Login
 `POST /api/Agent/Login`
-Content-Type: `application/json`
 
+Request:
 ```json
-{
-  "mobileOrEmail": "9876543210",
-  "password": "MyPassword1"
-}
+{ "mobileOrEmail": "9876543210", "password": "MyPassword1" }
 ```
 
-**Success (200):**
+Success:
 ```json
 {
   "message": "Login successful.",
   "data": {
     "token": "eyJhbGciOi...",
-    "agent": {
-      "agentId": 14,
-      "fullName": "Ramesh Kumar",
-      "businessName": "Kumar Travels",
-      "email": "ramesh@example.com",
-      "mobileNumber": "9876543210"
+    "agent": { "agentId": 14, "fullName": "Ramesh Kumar", "businessName": "Kumar Travels", "email": "ramesh@example.com", "mobileNumber": "9876543210" }
+  }
+}
+```
+
+Failure (401): `{ "message": "Your registration is still pending admin approval." }`
+
+Rate-limited: 5 attempts per 15 minutes. HTTP 429 if exceeded.
+Token valid for **24 hours**. No refresh endpoint — re-login required after expiry.
+
+### 2.3 Resolve / Create Customer
+`POST /api/Agent/ResolveCustomer` — Agent token required
+
+Use before booking on behalf of a walk-in customer. Looks up by phone; creates if not found.
+
+```json
+{ "customerName": "Suresh Patil", "customerPhone": "9123456789", "customerEmail": "suresh@example.com" }
+```
+(customerEmail optional)
+
+Success: `{ "message": "Existing customer found.", "userId": 231, "customerName": "Suresh Patil" }`
+
+### 2.4 Profile
+`GET /api/Agent/Profile` — Agent token required
+
+```json
+{ "agentId": 14, "fullName": "Ramesh Kumar", "businessName": "Kumar Travels", "email": "ramesh@example.com", "mobileNumber": "9876543210", "address": "123 MG Road, Pune", "approvalStatus": "Approved", "isActive": true }
+```
+
+### 2.5 My Bookings (NEW)
+`GET /api/Agent/MyBookings` — Agent token required
+
+Returns all bookings finalized by the logged-in agent. Auto-filtered by JWT — no userId param needed.
+
+> IMPORTANT: Use this for the agent dashboard — NOT FamilyBookingHistory or HistoryByUser.
+
+```json
+{
+  "message": "Bookings fetched.",
+  "count": 2,
+  "data": [
+    {
+      "bookingId": 18,
+      "bookingDate": "2026-09-20T19:24:00Z",
+      "customerName": "Parth",
+      "customerContact": "9860646215",
+      "tourName": "Ashtavinayak Darshan 2N/3D (Bus)",
+      "tourDate": "2026-09-22T00:00:00Z",
+      "totalSeats": 2,
+      "amountCollected": 6000.00,
+      "commissionPercentage": 5.00,
+      "commissionAmount": 300.00,
+      "status": "Confirmed"
     }
-  }
+  ]
 }
 ```
 
-**Failure (401)** — wrong credentials, account still pending, rejected, or deactivated:
-```json
-{ "message": "Your registration is still pending admin approval." }
-```
-
-This endpoint is **rate-limited**: 5 attempts per 15 minutes per client. Exceeding it returns **HTTP 429** with no body — handle this distinctly from a normal 401 (e.g. "Too many attempts, please try again later" rather than "wrong password").
-
-The returned `token` is a JWT valid for 24 hours. Use it as `Authorization: Bearer <token>` on every subsequent agent-only request.
-
-### 2.3 Resolve or create a customer
-`POST /api/Agent/ResolveCustomer` — **requires Agent token**
-
-When an agent books on behalf of a walk-in customer, use this first to get a `userId` to pass into the booking call. It looks the customer up by phone number; if not found, it creates a new customer record automatically.
-
-```json
-{
-  "customerName": "Suresh Patil",
-  "customerPhone": "9123456789",
-  "customerEmail": "suresh@example.com"
-}
-```
-(`customerEmail` is optional — omit it if the customer didn't provide one.)
-
-**Success (200):**
-```json
-{
-  "message": "Existing customer found.",
-  "userId": 231,
-  "customerName": "Suresh Patil"
-}
-```
-(`message` will be `"Customer created."` for a brand-new customer — same response shape either way.)
-
-**Why this exists, and why it's a separate call:** every booking requires a real `userId` — `Bookings.UserId` is a required foreign key into `Users`. But agents mostly book for walk-in customers who've never used the app and have no account, so something has to get a valid `userId` for them before the booking call. This endpoint does that: idempotent lookup-or-create by phone number, so a repeat customer (of this agent, or someone who separately registered via the app) never gets duplicated.
-
-It's a separate call rather than folded into `CreateBookingWithSeats` itself so the agent flow can show a confirmation step — e.g. "Existing customer found: Suresh Patil" vs. "New customer will be created" — before the agent commits to the booking. If your UI doesn't need that confirmation step, this could be simplified into a single call later; flag it if that's preferred and it can be revisited.
-
-### 2.4 Agent profile
-`GET /api/Agent/Profile` — **requires Agent token**
-
-**Success (200):**
-```json
-{
-  "agentId": 14,
-  "fullName": "Ramesh Kumar",
-  "businessName": "Kumar Travels",
-  "email": "ramesh@example.com",
-  "mobileNumber": "9876543210",
-  "address": "123 MG Road, Pune",
-  "approvalStatus": "Approved",
-  "isActive": true
-}
-```
+Field descriptions:
+- customerName — Customer name
+- customerContact — Customer phone number
+- tourName — Package/tour name
+- tourDate — Trip date
+- totalSeats — Adults + children with seat + children without seat
+- amountCollected — Total booking amount (INR)
+- commissionPercentage — Agent commission % on this booking
+- commissionAmount — Exact INR commission earned
 
 ---
 
-## 3. Changed: Booking API now supports agent-made bookings
+## 3. Booking — Agent Support
 
-**No new request fields were added to the booking endpoint.** Instead, whether a booking is an "agent booking" is determined entirely by **which token** is used to call it:
+No new request fields added. Whether a booking is agent-made is determined by the token used:
+- Customer JWT — normal booking, response unchanged
+- Agent JWT — server auto-detects agent, applies commission
 
-- Call `POST /api/Booking/CreateBookingWithSeats` with a **customer's** JWT → behaves exactly as before, response unchanged.
-- Call the same endpoint with an **agent's** JWT (from section 2.2) → the server automatically detects the agent, looks up their commission rate, and the response includes extra commission fields. You still pass `userId` in the request body as normal — that's the *customer* being booked for (use the `userId` you got from ResolveCustomer), not the agent.
+Pass userId in the body = the customer userId (from ResolveCustomer), not the agent.
 
-**Response when booked by a customer (unchanged):**
+Agent booking response:
 ```json
 {
   "message": "Booking and seats saved successfully.",
-  "data": { "bookingId": 5021 }
+  "data": { "bookingId": 5022, "totalPayment": 9000, "commissionPercentage": 10, "commissionAmount": 900, "agentPayable": 8100 }
 }
 ```
+agentPayable = totalPayment - commissionAmount
 
-**Response when booked by an agent (new fields):**
+---
+
+## 4. Package API (UPDATED)
+
+### 4.1 Get packages by category — new destinationId parameter
+
+```
+GET /api/Package/GetPackageByCateGoryId?id={categoryId}&isCarType={bool}&destinationId={id}
+```
+
+| Parameter | Required | Notes |
+|---|---|---|
+| id | yes | Category ID. Ignored when isCarType=true |
+| isCarType | no | true = car packages, false = bus packages |
+| destinationId | no | NEW — filter car packages by destination |
+
+Examples:
+```
+GET /api/Package/GetPackageByCateGoryId?id=2&isCarType=true                    -> all car packages
+GET /api/Package/GetPackageByCateGoryId?id=2&isCarType=true&destinationId=1    -> car packages for destination 1
+GET /api/Package/GetPackageByCateGoryId?id=1&isCarType=false                   -> bus packages (cat 1)
+```
+
+### 4.2 Sharing charges — new fields on package (NEW)
+
+Bus packages now include room sharing charges per person:
+
 ```json
 {
-  "message": "Booking and seats saved successfully.",
-  "data": {
-    "bookingId": 5022,
-    "totalPayment": 9000,
-    "commissionPercentage": 10,
-    "commissionAmount": 900,
-    "agentPayable": 8100
-  }
+  "packageId": 1,
+  "packageName": "Ashtavinayak Darshan 2N/3D (Bus)",
+  "adultPrice": 3500,
+  "singleSharingChargePerPerson": 800,
+  "doubleSharingChargePerPerson": 500,
+  "tripleSharingChargePerPerson": 300,
+  "isCar": false
 }
 ```
-`agentPayable` is `totalPayment - commissionAmount` — the amount the agent should actually collect/remit.
 
-Commission rate is looked up per-agent (an admin-configurable override) and falls back to a global default if the agent has no override set. Whatever rate applied at the moment of booking is permanently recorded on that booking — a later change to commission rates never changes past bookings.
+- singleSharingChargePerPerson — Extra per person for single room
+- doubleSharingChargePerPerson — Extra per person for double sharing
+- tripleSharingChargePerPerson — Extra per person for triple sharing
 
----
+Values are null if admin has not set them. Not applicable when isCar = true.
 
-## 4. Agent approval — admin-only, no public API
+Booking form dropdown options:
+- Default/Group sharing — no extra charge
+- Single Sharing — add singleSharingChargePerPerson x persons
+- Double Sharing — add doubleSharingChargePerPerson x persons
+- Triple Sharing — add tripleSharingChargePerPerson x persons
 
-There is currently no API for agents or the frontend app to check their own approval status other than attempting login and reading the message (see 2.2 failure responses) or calling `/api/Agent/Profile` once they do have a valid token from a prior approved login. Approval itself happens only through the Admin Panel (not something the frontend integrates with).
+### 4.3 Package price endpoint
 
----
-
-## 5. General behavior changes across the whole API
-
-**Error responses no longer include technical detail.** Previously, some endpoints returned the raw exception message on failure (e.g. a database error string). All endpoints now return a clean, generic message on unexpected server errors, e.g.:
-```json
-{ "message": "An unexpected error occurred. Please try again." }
 ```
-Validation errors (bad input) still return specific, useful messages as before — only unexpected server-side failures were changed. If you were ever parsing/displaying the old raw error text anywhere, that text will now be generic; don't rely on its exact wording.
+GET /api/Package/GetPackagePrice/{cityId}/{categoryId}/{packageId}
+```
 
-**Booking price is always server-calculated.** `TotalPayment` sent in a booking request is no longer used to set the actual price — the server calculates it from the trip's package rates regardless of what's submitted. You can still send it (kept for compatibility) but it's ignored for pricing purposes; only `Advance` (how much the customer pays upfront) is still taken from the request, and it's rejected if it exceeds the real computed total.
-
-**OTP login, Development only:** `POST /api/User/LoginByOTP` now includes a `devOnlyOtp` field in its response, but **only** when the API is running in the Development environment. It will never appear in a staging/production response — don't build any logic around it being present.
-
-**Health check endpoints** (not authenticated, informational — useful if the frontend/ops wants a quick "is the API up" check): `GET /health/live` and `GET /health/ready`.
-
----
-
-## 6. Database changes (for awareness — not directly relevant to frontend calls, but good context)
-
-- New tables: `Agents`, `CommissionSettings`
-- New columns on `Bookings`: `AgentId`, `CommissionPercentage`, `CommissionAmount` (all nullable — `null` for ordinary customer bookings)
-- A uniqueness rule was added at the database level so the same seat on the same trip can never be double-booked, even under simultaneous requests
-- A foreign key naming fix on `Notifications` (internal only, no API impact)
-
-None of this requires any frontend changes by itself — it's covered here so the team has the full picture of what changed underneath the API.
+For car packages, use categoryId 7 (not the display ID):
+```
+GET /api/Package/GetPackagePrice/1/7/9
+```
 
 ---
 
-## 7. Before deployment — what's still needed
+## 5. Booking History — New Fields (UPDATED)
 
-Things the frontend team should know about or provide before this goes live:
+Both history endpoints now return 3 extra fields per booking.
 
-**We need your production domain(s) for CORS.** The API restricts which domains can call it from a browser. Send us the exact production URL(s) the frontend will be served from (e.g. `https://app.example.com`) so they can be added to the allowed list — without this, browser-based calls from production will be blocked even though everything works fine from `localhost` today.
+### 5.1 Car booking history
+```
+GET /api/Booking/FamilyBookingHistory/{userId}
+```
 
-**No token refresh — plan for full re-login.** Both customer and agent JWTs expire after 24 hours, and there is currently no refresh-token endpoint. When a token expires, calls will start returning 401 — the app needs to catch that and send the user back through login (OTP for customers, password for agents), not silently retry.
+New fields added:
+```json
+{
+  "bookingId": 3,
+  "customerName": "Parth",
+  "customerContact": "9860646215",
+  "commissionAmount": null,
+  "carType": "Swift",
+  "totalPayment": 1.00
+}
+```
 
-**No server-side payment confirmation yet.** A booking's paid status is currently set from what the client/Razorpay callback reports, not confirmed independently by the server via a webhook. Functionally this doesn't change anything about how the frontend calls `CreateBookingWithSeats`/`UpdatePayment` today, but don't build any assumption that `PaymentStatus` is independently verified — flagging so the team has full visibility, this is a backend/business decision being tracked separately, not something the frontend needs to change now.
+### 5.2 Bus booking history
+```
+GET /api/Booking/HistoryByUser/{userId}
+```
 
-**Family/car bookings (`BookCar`) don't have agent support.** Only `CreateBookingWithSeats` (regular seat bookings) was extended with agent/commission handling in this phase. If agent-assisted car bookings are needed, that's follow-up work, not yet available.
+New fields added:
+```json
+{
+  "bookingId": 18,
+  "customerName": "Parth",
+  "customerContact": "9860646215",
+  "commissionAmount": 300.00,
+  "tripName": "Ashtavinayak Darshan",
+  "totalPayment": 6000.00
+}
+```
 
-**Agent password reset — not built yet.** There's a registration flow and a login flow, but no "forgot password" for agents. If the frontend needs this for launch, flag it — currently an agent who forgets their password has no self-service recovery path.
+commissionAmount is null when no agent was involved in the booking.
 
-**Confirm before launch:** whether any of the above are launch-blockers for the frontend's scope, so they can be prioritized ahead of deployment rather than discovered afterward.
+---
+
+## 6. IMPORTANT — Agent vs Customer: Use Correct Endpoints
+
+| Use Case | API | Token |
+|---|---|---|
+| Customer own car bookings | GET /api/Booking/FamilyBookingHistory/{userId} | Customer JWT |
+| Customer own bus bookings | GET /api/Booking/HistoryByUser/{userId} | Customer JWT |
+| Agent finalized bookings | GET /api/Agent/MyBookings | Agent JWT |
+
+The agent AgentId and their UserId (as a customer in the Users table) are separate records.
+Calling FamilyBookingHistory with an agent userId returns their personal customer bookings, NOT their agent bookings.
+Always use /api/Agent/MyBookings for the agent dashboard.
+
+---
+
+## 7. General Behavior
+
+- Error responses — clean generic message on server errors: `{ "message": "An unexpected error occurred. Please try again." }`
+- Booking price — always server-calculated; TotalPayment in request is ignored for pricing
+- Health checks — GET /health/live and GET /health/ready (no auth required)
+- JWT expiry — 24 hours, no refresh endpoint; redirect to login on 401
+
+---
+
+## 8. Database Changes (for awareness)
+
+- New tables: Agents, CommissionSettings
+- New columns on Bookings: AgentId, CommissionPercentage, CommissionAmount (nullable)
+- New columns on Packages: SingleSharingChargePerPerson, DoubleSharingChargePerPerson, TripleSharingChargePerPerson, DestinationId
+- Unique constraint on seat bookings — same seat on same trip cannot be double-booked
+
+---
+
+## 9. Known Limitations
+
+| Item | Status |
+|---|---|
+| Car bookings via agent with commission | Not yet built |
+| Agent forgot password / reset | Not yet built |
+| JWT refresh token | Not built — re-login after 24h |
+| Server-side payment webhook verification | Not built |
