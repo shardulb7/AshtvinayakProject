@@ -1,4 +1,4 @@
-﻿@model IEnumerable<AshtavinayakAPP.Models.Booking>
+@model IEnumerable<AshtavinayakAPP.Models.Booking>
 
 @{
     ViewData["Title"] = "Booking Index";
@@ -65,6 +65,7 @@
                 <th>@Html.DisplayNameFor(model => model.PickupPoint.PickupPoint1)</th>
                 <th>@Html.DisplayNameFor(model => model.Droppoint)</th>
                 <th>Trip</th>
+                <th>Room Type</th>
                 <th>@Html.DisplayNameFor(model => model.User.UserName)</th>
                 <th>@Html.DisplayNameFor(model => model.User.PhoneNumber)</th>
                 <th>Action</th>
@@ -94,6 +95,16 @@
                         else
                         {
                             @:Car Booking
+                        }
+                    </td>
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(item.RoomType))
+                        {
+                            <span class="badge bg-info text-dark">@item.RoomType</span>
+                        }
+                        else
+                        {
+                            @:—
                         }
                     </td>
                     <td>@Html.DisplayFor(modelItem => item.User.UserName)</td>
@@ -136,7 +147,7 @@
         doc.text('Booking List', 14, 10);
 
         // Define table headers
-        const tableHeaders = ["Serial No", "Booking Date", "Total Payment", "Advance", "Pickup Point", "Drop Point", "Trip", "User"];
+        const tableHeaders = ["Serial No", "Booking Date", "Total Payment", "Advance", "Pickup Point", "Drop Point", "Trip", "Room Type", "User"];
 
         const rows = [];
         const allRows = document.querySelectorAll("#bookingTable tbody tr");
@@ -162,7 +173,8 @@
                 rowData.push(cells[4].innerText); // Pickup Point
                 rowData.push(cells[5].innerText); // Drop Point
                 rowData.push(cells[6].innerText); // Trip
-                rowData.push(cells[7].innerText); // User
+                rowData.push(cells[7].innerText); // Room Type
+                rowData.push(cells[8].innerText); // User
 
                 rows.push(rowData);
             }
