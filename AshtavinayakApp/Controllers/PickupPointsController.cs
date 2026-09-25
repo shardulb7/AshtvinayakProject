@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -77,7 +77,7 @@ namespace AshtavinayakAPP.Controllers
             return View(pickupPoint);
         }
 
-        // GET: PickupPoints/Create
+        // GET: PickupPoints/Create — now renders multi-add form
         public IActionResult Create()
         {
             ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName");
@@ -85,22 +85,34 @@ namespace AshtavinayakAPP.Controllers
             return View();
         }
 
-        // POST: PickupPoints/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: PickupPoints/BulkCreate — saves multiple pickup points in one submission
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PickupPointId,CityId,PickupPoint1,Time,PackageId")] PickupPoint pickupPoint)
+        public async Task<IActionResult> BulkCreate(int cityId, int packageId,
+            [FromForm] List<string> points, [FromForm] List<string> times)
         {
-            if (ModelState.IsValid)
+            if (cityId == 0 || packageId == 0 || points == null || !points.Any(p => !string.IsNullOrWhiteSpace(p)))
             {
-                _context.Add(pickupPoint);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                TempData["Error"] = "City, Package and at least one pickup point are required.";
+                ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName");
+                return View("Create");
             }
-            ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName", pickupPoint.CityId);
-            ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName", pickupPoint.PackageId);
-            return View(pickupPoint);
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                if (string.IsNullOrWhiteSpace(points[i])) continue;
+                var pp = new PickupPoint
+                {
+                    CityId       = cityId,
+                    PackageId    = packageId,
+                    PickupPoint1 = points[i].Trim(),
+                    Time         = (i < times.Count && TimeOnly.TryParse(times[i], out var t)) ? t : null,
+                    IsDeleted    = false
+                };
+                _context.PickupPoints.Add(pp);
+            }
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: PickupPoints/Edit/5

@@ -1,123 +1,137 @@
-﻿@model AshtavinayakAPP.Models.PickupPoint
-
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Pickup Points";
 }
 
 <link href="~/css/category/create.css" rel="stylesheet" />
-<!-- Include SweetAlert CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+    .pickup-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .pickup-row input[type="text"]  { flex: 1; }
+    .pickup-row input[type="time"]  { width: 140px; }
+    .btn-add-row    { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 34px; height: 34px; font-size: 20px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+    .btn-remove-row { background: #95a5a6; color: white; border: none; border-radius: 50%; width: 34px; height: 34px; font-size: 20px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+    .row-labels { display: flex; gap: 8px; margin-bottom: 4px; }
+    .row-labels .lbl-point { flex: 1; font-weight: 600; font-size: 0.9rem; }
+    .row-labels .lbl-time  { width: 140px; font-weight: 600; font-size: 0.9rem; }
+</style>
 
 <div class="d-flex justify-content-center align-items-center">
-    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
-
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 55%;">
 
         <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
-            <h4>Create Pickup Point</h4>
+            <h4>Create Pickup Points</h4>
             <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
         </div>
         <hr />
 
-        <form id="pickupPointForm" asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <form id="pickupForm" asp-action="BulkCreate" method="post">
+            @Html.AntiForgeryToken()
 
             <div class="form-group">
-                <label asp-for="CityId" class="control-label">City Name</label><span style="color: red;">*</span>
-                <select asp-for="CityId" class="form-control" asp-items="ViewBag.CityId" id="CityId" required>
+                <label class="control-label">City Name <span style="color:red">*</span></label>
+                <select id="CityId" name="cityId" class="form-control" required>
                     <option value="" disabled selected>Select City</option>
+                    @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CityId"])
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
                 </select>
-                <span asp-validation-for="CityId" class="text-danger"></span>
             </div>
+
             <div class="form-group">
-                <label asp-for="PackageId" class="control-label">Package Name</label><span style="color: red;">*</span>
-                <select asp-for="PackageId" class="form-control" asp-items="ViewBag.PackageId">
+                <label class="control-label">Package Name <span style="color:red">*</span></label>
+                <select id="PackageId" name="packageId" class="form-control" required>
                     <option value="" disabled selected>Select Package</option>
                 </select>
-                <span asp-validation-for="PackageId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="PickupPoint1" class="control-label">Pickup Point</label><span style="color: red;">*</span>
-                <input asp-for="PickupPoint1" class="form-control" required placeholder="Enter Pickup Point" />
-                <span asp-validation-for="PickupPoint1" class="text-danger"></span>
             </div>
 
-           @*  <div class="form-group">
-                <label asp-for="Time" class="control-label"></label><span style="color: red;">*</span>
-                <input asp-for="Time" class="form-control" required placeholder="Enter Time" />
-                <span asp-validation-for="Time" class="text-danger"></span>
-            </div> *@
-
-            <div class="form-group">
-                <label asp-for="Time" class="control-label"></label><span style="color: red;">*</span>
-                <input asp-for="Time" type="time" class="form-control" required placeholder="Enter Time" />
-                <span asp-validation-for="Time" class="text-danger"></span>
+            <div class="form-group mt-3">
+                <div class="row-labels">
+                    <span class="lbl-point">Pickup Point <span style="color:red">*</span></span>
+                    <span class="lbl-time">Pickup Time <span style="color:red">*</span></span>
+                    <span style="width:76px"></span>
+                </div>
+                <div id="pickupRows">
+                    <div class="pickup-row">
+                        <input type="text" name="points" class="form-control" placeholder="Enter pickup point" required />
+                        <input type="time" name="times" class="form-control" required />
+                        <button type="button" class="btn-remove-row d-none" title="Remove">−</button>
+                        <button type="button" class="btn-add-row" title="Add another">+</button>
+                    </div>
+                </div>
             </div>
 
-
-           
-
-            <div class="form-group text-center">
-                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue">Create</button>
-                <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;">Cancel</button>
+            <div class="form-group text-center mt-3">
+                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue;color:white">Create</button>
+                <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;color:white">Cancel</button>
             </div>
         </form>
 
     </div>
 </div>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
-    $(document).ready(function () {
-        $('#CityId').change(function () {
-            var cityId = $(this).val();
-            if (cityId) {
-                $.ajax({
-                    url: '@Url.Action("GetPackagesByCity", "TripRoutes")',
-                    type: 'GET',
-                    data: { cityId: cityId },
-                    success: function (data) {
-                        var packageDropdown = $('#PackageId');
-                        packageDropdown.empty();
-                        packageDropdown.append('<option value="" disabled selected>Select Package</option>');
-                        $.each(data, function (index, package) {
-                            packageDropdown.append($('<option></option>').val(package.packageId).text(package.packageName));
-                        });
-                    },
-                    error: function () {
-                        alert('Failed to load packages. Please try again.');
-                    }
-                });
-            }
+    // Load packages when city changes
+    $('#CityId').change(function () {
+        var cityId = $(this).val();
+        var pkg = $('#PackageId');
+        pkg.html('<option value="" disabled selected>Select Package</option>');
+        if (!cityId) return;
+        $.get('@Url.Action("GetPackagesByCity", "TripRoutes")', { cityId: cityId }, function (data) {
+            $.each(data, function (i, p) {
+                pkg.append($('<option>').val(p.packageId).text(p.packageName));
+            });
+        }).fail(function () { alert('Failed to load packages.'); });
+    });
+
+    // Add new row
+    $(document).on('click', '.btn-add-row', function () {
+        var newRow = $('<div class="pickup-row">' +
+            '<input type="text" name="points" class="form-control" placeholder="Enter pickup point" required />' +
+            '<input type="time" name="times" class="form-control" required />' +
+            '<button type="button" class="btn-remove-row" title="Remove">−</button>' +
+            '<button type="button" class="btn-add-row" title="Add another">+</button>' +
+            '</div>');
+        $('#pickupRows').append(newRow);
+        refreshButtons();
+    });
+
+    // Remove row
+    $(document).on('click', '.btn-remove-row', function () {
+        $(this).closest('.pickup-row').remove();
+        refreshButtons();
+    });
+
+    function refreshButtons() {
+        var rows = $('#pickupRows .pickup-row');
+        rows.each(function (i) {
+            var isLast = (i === rows.length - 1);
+            $(this).find('.btn-add-row').toggleClass('d-none', !isLast);
+            $(this).find('.btn-remove-row').toggleClass('d-none', rows.length === 1);
+        });
+    }
+
+    // Submit with SweetAlert
+    document.getElementById('submitButton').addEventListener('click', function () {
+        var form = document.getElementById('pickupForm');
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Create these pickup points?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Create!"
+        }).then(function (result) {
+            if (result.isConfirmed) form.submit();
         });
     });
-   
-    // SweetAlert for Submit Button
-    document.getElementById('submitButton').addEventListener('click', function (e) {
-        e.preventDefault(); // Prevent the default button behavior
 
-        // Check if form is valid before submitting
-        var form = document.getElementById('pickupPointForm');
-        if (form.checkValidity()) {
-            Swal.fire({
-                title: "Are you sure?",
-                text: "Do you want to create this pickup point?",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Yes, Create it!"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit(); // Submit the form if confirmed
-                }
-            });
-        } else {
-            // If form is not valid, trigger HTML5 validation
-            form.reportValidity(); // This will display the default validation messages
-        }
-    });
-
-    // SweetAlert for Cancel Button
-    document.getElementById('cancelButton').addEventListener('click', function (e) {
+    // Cancel with SweetAlert
+    document.getElementById('cancelButton').addEventListener('click', function () {
         Swal.fire({
             title: "Are you sure?",
             text: "Your changes will be lost!",
@@ -126,16 +140,12 @@
             confirmButtonColor: "#3085d6",
             cancelButtonColor: "#d33",
             confirmButtonText: "Yes, Cancel!"
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = '@Url.Action("Index", "PickupPoints")'; // Redirect if confirmed
-            }
+        }).then(function (result) {
+            if (result.isConfirmed) window.location.href = '@Url.Action("Index", "PickupPoints")';
         });
     });
 </script>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }

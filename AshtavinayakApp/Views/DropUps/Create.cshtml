@@ -1,52 +1,64 @@
-@model AshtavinayakAPP.Models.DropUp
-
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Drop Points";
 }
 
 <link href="~/css/category/create.css" rel="stylesheet" />
-<!-- Include SweetAlert CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+    .drop-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .drop-row input[type="text"] { flex: 1; }
+    .btn-add-row    { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 34px; height: 34px; font-size: 20px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+    .btn-remove-row { background: #95a5a6; color: white; border: none; border-radius: 50%; width: 34px; height: 34px; font-size: 20px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+</style>
 
 <div class="d-flex justify-content-center align-items-center">
-    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 55%;">
 
         <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
-            <h4>Create DropUp</h4>
+            <h4>Create Drop Points</h4>
             <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
         </div>
         <hr />
 
-        <form id="dropUpForm" asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <form id="dropForm" asp-action="BulkCreate" method="post">
+            @Html.AntiForgeryToken()
 
-            <!-- Drop Point Input -->
             <div class="form-group">
-                <label asp-for="DropPoint" class="control-label"></label><span style="color: red;">*</span>
-                <input asp-for="DropPoint" class="form-control" required placeholder="Enter Drop Point" />
-                <span asp-validation-for="DropPoint" class="text-danger"></span>
-            </div>
-
-            <!-- City Dropdown -->
-            <div class="form-group">
-                <label asp-for="CityId" class="control-label">City Name</label><span style="color: red;">*</span>
-                <select asp-for="CityId" class="form-control" asp-items="ViewBag.CityId" required>
-                    <option value="">-- Select City --</option>
+                <label class="control-label">City Name <span style="color:red">*</span></label>
+                <select id="CityId" name="cityId" class="form-control" required>
+                    <option value="" disabled selected>Select City</option>
+                    @foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewData["CityId"])
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
                 </select>
             </div>
 
-            <!-- Package Dropdown -->
             <div class="form-group">
-                <label asp-for="PackageId" class="control-label">Select Package</label>
-                <select asp-for="PackageId" class="form-control" asp-items="ViewBag.PackageId">
-                    <option value="">-- Select Package --</option>
+                <label class="control-label">Package Name <span style="color:red">*</span></label>
+                <select id="PackageId" name="packageId" class="form-control" required>
+                    <option value="" disabled selected>Select Package</option>
                 </select>
             </div>
 
-            <!-- Submit and Cancel Buttons -->
-            <div class="form-group text-center">
-                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue">Create</button>
-                <button type="button" id="cancelButton" class="btn btn-secondaryN">Cancel</button>
+            <div class="form-group mt-3">
+                <label class="control-label d-block mb-1" style="font-weight:600">
+                    Drop Points <span style="color:red">*</span>
+                </label>
+                <div id="dropRows">
+                    <div class="drop-row">
+                        <input type="text" name="points" class="form-control" placeholder="Enter drop point" required />
+                        <button type="button" class="btn-remove-row d-none" title="Remove">−</button>
+                        <button type="button" class="btn-add-row" title="Add another">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group text-center mt-3">
+                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue;color:white">Create</button>
+                <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;color:white">Cancel</button>
             </div>
         </form>
 
@@ -54,33 +66,64 @@
 </div>
 
 <script>
-    // SweetAlert for Submit Button
-    document.getElementById('submitButton').addEventListener('click', function (e) {
-        var form = document.getElementById('dropUpForm');
-
-        // Check if the form is valid
-        if (form.checkValidity()) {
-            Swal.fire({
-                title: "Are you sure?",
-                text: "Do you want to add this DropUp?",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Yes, Add it!"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit(); // Submit the form if confirmed
-                }
+    // Load packages when city changes
+    $('#CityId').change(function () {
+        var cityId = $(this).val();
+        var pkg = $('#PackageId');
+        pkg.html('<option value="" disabled selected>Select Package</option>');
+        if (!cityId) return;
+        $.get('@Url.Action("GetPackagesByCity", "TripRoutes")', { cityId: cityId }, function (data) {
+            $.each(data, function (i, p) {
+                pkg.append($('<option>').val(p.packageId).text(p.packageName));
             });
-        } else {
-            // Trigger the validation to show error messages
-            form.reportValidity();
-        }
+        }).fail(function () { alert('Failed to load packages.'); });
     });
 
-    // SweetAlert for Cancel Button
-    document.getElementById('cancelButton').addEventListener('click', function (e) {
+    // Add new row
+    $(document).on('click', '.btn-add-row', function () {
+        var newRow = $('<div class="drop-row">' +
+            '<input type="text" name="points" class="form-control" placeholder="Enter drop point" required />' +
+            '<button type="button" class="btn-remove-row" title="Remove">−</button>' +
+            '<button type="button" class="btn-add-row" title="Add another">+</button>' +
+            '</div>');
+        $('#dropRows').append(newRow);
+        refreshButtons();
+    });
+
+    // Remove row
+    $(document).on('click', '.btn-remove-row', function () {
+        $(this).closest('.drop-row').remove();
+        refreshButtons();
+    });
+
+    function refreshButtons() {
+        var rows = $('#dropRows .drop-row');
+        rows.each(function (i) {
+            var isLast = (i === rows.length - 1);
+            $(this).find('.btn-add-row').toggleClass('d-none', !isLast);
+            $(this).find('.btn-remove-row').toggleClass('d-none', rows.length === 1);
+        });
+    }
+
+    // Submit with SweetAlert
+    document.getElementById('submitButton').addEventListener('click', function () {
+        var form = document.getElementById('dropForm');
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Create these drop points?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Create!"
+        }).then(function (result) {
+            if (result.isConfirmed) form.submit();
+        });
+    });
+
+    // Cancel with SweetAlert
+    document.getElementById('cancelButton').addEventListener('click', function () {
         Swal.fire({
             title: "Are you sure?",
             text: "Your changes will be lost!",
@@ -89,11 +132,12 @@
             confirmButtonColor: "#3085d6",
             cancelButtonColor: "#d33",
             confirmButtonText: "Yes, Cancel!"
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = '@Url.Action("Index", "DropUps")'; // Redirect if confirmed
-            }
+        }).then(function (result) {
+            if (result.isConfirmed) window.location.href = '@Url.Action("Index", "DropUps")';
         });
     });
 </script>
 
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

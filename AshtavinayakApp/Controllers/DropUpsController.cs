@@ -77,22 +77,31 @@ namespace AshtavinayakAPP.Controllers
             return View();
         }
 
-        // POST: DropUps/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: DropUps/BulkCreate — saves multiple drop points in one submission
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("DroppointId,DropPoint,CityId,PackageId")] DropUp dropUp)
+        public async Task<IActionResult> BulkCreate(int cityId, int packageId,
+            [FromForm] List<string> points)
         {
-            if (ModelState.IsValid)
+            if (cityId == 0 || packageId == 0 || points == null || !points.Any(p => !string.IsNullOrWhiteSpace(p)))
             {
-                _context.Add(dropUp);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                TempData["Error"] = "City, Package and at least one drop point are required.";
+                ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName");
+                return View("Create");
             }
-            ViewData["CityId"] = new SelectList(_context.Cities.Where(x => !x.IsDeleted), "CityId", "CityName", dropUp.CityId);
-            ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName", dropUp.PackageId);
-            return View(dropUp);
+
+            foreach (var point in points.Where(p => !string.IsNullOrWhiteSpace(p)))
+            {
+                _context.DropUps.Add(new DropUp
+                {
+                    CityId    = cityId,
+                    PackageId = packageId,
+                    DropPoint = point.Trim(),
+                    IsDeleted = false
+                });
+            }
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: DropUps/Edit/5

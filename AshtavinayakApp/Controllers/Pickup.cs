@@ -22,37 +22,43 @@ namespace AshtavinayakAPP.Controllers
             _logger = logger;
         }
 
-        // GET: api/PickupPoint/{cityId}
+        // GET: api/Pickup/city/{cityId}?packageId={packageId}
+        // packageId is optional. When provided, returns only pickup points for that package.
         [HttpGet("city/{cityId}")]
-        public async Task<ActionResult<object>> GetPickupsByCity(int cityId)
+        public async Task<ActionResult<object>> GetPickupsByCity(int cityId, [FromQuery] int? packageId)
         {
             try
             {
-                // Fetch the PickupPoints based on CityId
-                var pickups = await _context.PickupPoints
-                    .Include(p => p.City)                    // CRIT-11: eagerly load City to prevent NullReferenceException
+                var query = _context.PickupPoints
+                    .Include(p => p.City)
                     .Where(x => !x.IsDeleted)
-                    .Where(p => p.CityId == cityId)
+                    .Where(p => p.CityId == cityId);
+
+                // If packageId is supplied, filter to that package only
+                if (packageId.HasValue)
+                    query = query.Where(p => p.PackageId == packageId.Value);
+
+                var pickups = await query
                     .Select(p => new
                     {
                         PickupPointName = p.PickupPoint1,
                         CityName        = p.City.CityName,
                         PickupPointID   = p.PickupPointId,
                         p.Time,
+                        p.PackageId,
                     })
+                    .OrderBy(p => p.Time)
                     .ToListAsync();
 
-                // If no results are found, return a not found response
                 if (!pickups.Any())
                 {
                     return NotFound(new
                     {
-                        Message = "No pickup points found for the given CityId.",
+                        Message = "No pickup points found for the given criteria.",
                         Data = pickups
                     });
                 }
 
-                // Return the response in the desired format
                 return Ok(new
                 {
                     Message = "Pickup points fetched successfully.",
@@ -61,7 +67,7 @@ namespace AshtavinayakAPP.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetPickupsByCity failed for CityId={CityId}", cityId);
+                _logger.LogError(ex, "GetPickupsByCity failed for CityId={CityId} PackageId={PackageId}", cityId, packageId);
                 return StatusCode(500, new
                 {
                     Message = "An unexpected error occurred. Please try again.",
@@ -69,6 +75,7 @@ namespace AshtavinayakAPP.Controllers
                 });
             }
         }
+
         // GET: api/Pickups/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<object>> GetPickup(int id)
