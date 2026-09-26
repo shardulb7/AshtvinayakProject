@@ -37,22 +37,16 @@ namespace AshtavinayakAPP.Controllers
             }
             base.OnActionExecuting(context);
         }
-        public async Task<IActionResult> Index(int page = 1)
+        public async Task<IActionResult> Index()
         {
-            int pageSize = 10; // Number of records per page
-            int totalRecords = await _context.PickupPoints.Where(x => !x.IsDeleted).CountAsync(); // Get total number of pickup points
-            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize); // Calculate total pages
-
-            var pickupPoints = await _context.PickupPoints.Where(x => !x.IsDeleted)
-                                             .Include(p => p.City)
-                                             .Include(p => p.Package)
-                                             .OrderByDescending(p => p.PickupPointId) // Ordering by PickupPointId in descending order
-                                             .Skip((page - 1) * pageSize) // Skip records for previous pages
-                                             .Take(pageSize) // Take only the records for the current page
-                                             .ToListAsync();
-
-            ViewData["TotalPages"] = totalPages;
-            ViewData["CurrentPage"] = page;
+            // Load all pickup points ordered by package then time — grouped in view by package
+            var pickupPoints = await _context.PickupPoints
+                .Where(x => !x.IsDeleted)
+                .Include(p => p.City)
+                .Include(p => p.Package)
+                .OrderBy(p => p.Package != null ? p.Package.PackageName : "zzz")
+                .ThenBy(p => p.Time)
+                .ToListAsync();
 
             return View(pickupPoints);
         }

@@ -1,140 +1,179 @@
 @model IEnumerable<AshtavinayakAPP.Models.PickupPoint>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Pickup Point List";
+    // Group by Package
+    var groups = Model
+        .GroupBy(p => new { PackageName = p.Package?.PackageName ?? "—", CityName = p.City?.CityName ?? "—", p.PackageId })
+        .OrderBy(g => g.Key.PackageName)
+        .ToList();
 }
 
 <link href="~/CSS/Category/index.css" rel="stylesheet" />
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery for AJAX -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<div class="d-flex justify-content-between align-items-center w-100">
+<style>
+    .pkg-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f0f4ff;
+        border: 1px solid #d0d9f0;
+        border-radius: 8px;
+        padding: 10px 16px;
+        margin-bottom: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+        user-select: none;
+    }
+    .pkg-header:hover { background: #e2eaff; }
+    .pkg-header.open   { background: #dce6ff; border-color: #aab8e8; border-radius: 8px 8px 0 0; margin-bottom: 0; }
+    .pkg-header-left   { display: flex; align-items: center; gap: 10px; }
+    .pkg-name          { font-weight: 600; font-size: 1rem; color: #2c3e70; }
+    .pkg-city          { font-size: 0.82rem; color: #666; background:#e8ecf5; padding:2px 8px; border-radius:20px; }
+    .pkg-count         { font-size: 0.82rem; color: #888; }
+    .chevron           { font-size: 1rem; color: #555; transition: transform 0.25s; }
+    .open .chevron     { transform: rotate(90deg); }
+    .pkg-body          { border: 1px solid #d0d9f0; border-top: none; border-radius: 0 0 8px 8px; margin-bottom: 14px; overflow: hidden; }
+    .pkg-body table    { margin: 0; }
+    .pkg-body thead th { background: #f8f9ff; font-size: 0.88rem; padding: 8px 12px; }
+    .pkg-body tbody td { font-size: 0.9rem; padding: 7px 12px; vertical-align: middle; }
+    .pkg-body tbody tr:last-child td { border-bottom: none; }
+    .no-results        { text-align: center; color: #999; padding: 40px; }
+    .search-highlight  { background: #fff3cd; border-radius: 3px; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center w-100 mb-3">
     <h2>Pickup Point List</h2>
-    <div class="lefticons d-flex align-items-center">
-        <!-- Search Bar -->
-        <input type="text" id="searchInput" placeholder="Search..." style="padding: 5px; width: 200px; margin-right: 5px; display: none; border: none; margin-top:-17px;" onkeyup="filterTable()" />
-        <p>
-            <a href="javascript:void(0);" id="searchIcon" class="btn" style="padding: 5px 10px; margin-right: 5px; border: 1px solid grey; background-color: white; color: black;" title='Search'>
-                <i class="fas fa-search" style="color: black;"></i>
-            </a>
-        </p>
-        <p>
-            <a href="@Url.Action("Create")" class="btn btn-primary" style="padding: 5px 10px;" title='Add New'>
-                <i class="fas fa-plus"></i>
-            </a>
-        </p>
+    <div class="lefticons d-flex align-items-center gap-2">
+        <!-- Search -->
+        <input type="text" id="searchInput" placeholder="Search..." oninput="filterGroups()"
+               style="padding:5px 10px; width:200px; border:1px solid #ccc; border-radius:6px; display:none;" />
+        <a href="javascript:void(0);" id="searchIcon" class="btn"
+           style="padding:5px 10px; border:1px solid grey; background:white;">
+            <i class="fas fa-search" style="color:black;"></i>
+        </a>
+        <!-- Expand / Collapse All -->
+        <button id="expandAll" class="btn btn-outline-secondary btn-sm" title="Expand all" onclick="toggleAll(true)">
+            <i class="fas fa-expand-alt"></i> All
+        </button>
+        <button id="collapseAll" class="btn btn-outline-secondary btn-sm" title="Collapse all" onclick="toggleAll(false)">
+            <i class="fas fa-compress-alt"></i>
+        </button>
+        <!-- Add -->
+        <a href="@Url.Action("Create")" class="btn btn-primary" style="padding:5px 10px;" title="Add New">
+            <i class="fas fa-plus"></i>
+        </a>
     </div>
 </div>
 
-<div class="table-container">
-    <table class="table" id="pickupPointTable">
-        <thead>
-            <tr>
-                <th>Serial No</th>
-                <th>PickupPoint</th>
-                <th>@Html.DisplayNameFor(model => model.Time)</th>
-                <th>City</th>
-                <th>Package</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            @{
-                int serialNumber = 1; // Initialize serial number counter
-            }
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@serialNumber</td>
-                    <td>@Html.DisplayFor(modelItem => item.PickupPoint1)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Time)</td>
-                    <td>@(item.City?.CityName ?? "-")</td>
-                    <td>@(item.Package?.PackageName ?? "-")</td>
+@if (!groups.Any())
+{
+    <div class="no-results">No pickup points found. Click <strong>+</strong> to add some.</div>
+}
 
-                    <td>
-                        <a href='@Url.Action("Edit", new { id = item.PickupPointId })'>
-                            <img src='~/images/edit (1).png' alt='Edit' style='width: 25px; height: 25px;' />
-                        </a>
-                        <a href='@Url.Action("Details", new { id = item.PickupPointId })'>
-                            <img src='~/images/investigation_1723432.png' alt='Details' style='width: 25px; height: 25px;' />
-                        </a>
-                        <a href='@Url.Action("Delete", new { id = item.PickupPointId })'>
-                            <img src='~/images/delete (1).png' alt='Delete' style='width: 25px; height: 25px;' />
-                        </a>
-                       
-                    </td>
-                </tr>
-                {
-                    serialNumber++; // Increment serial number
-                }
-            }
-        </tbody>
-    </table>
+@foreach (var group in groups)
+{
+    var groupId = "pkg-" + (group.Key.PackageId?.ToString() ?? "none");
+    <div class="pkg-group" data-package="@group.Key.PackageName.ToLower()" data-city="@group.Key.CityName.ToLower()">
 
-    <div class="pagination">
-        @{
-            int currentPage = (int)(ViewData["CurrentPage"] ?? 1);
-            int totalPages  = (int)(ViewData["TotalPages"]  ?? 1);
-        }
-        @if (currentPage > 1)
-        {
-            <a href="@Url.Action("Index", new { page = currentPage - 1 })">Previous</a>
-        }
+        <div class="pkg-header" onclick="toggleGroup('@groupId', this)">
+            <div class="pkg-header-left">
+                <span class="chevron">▶</span>
+                <span class="pkg-name">@group.Key.PackageName</span>
+                <span class="pkg-city">@group.Key.CityName</span>
+            </div>
+            <span class="pkg-count">@group.Count() pickup point@(group.Count() != 1 ? "s" : "")</span>
+        </div>
 
-        @for (int i = 1; i <= totalPages; i++)
-        {
-            <a href="@Url.Action("Index", new { page = i })" class="@(i == currentPage ? "active" : "")">@i</a>
-        }
+        <div class="pkg-body" id="@groupId" style="display:none;">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Pickup Point</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int rowNum = 1; }
+                    @foreach (var item in group)
+                    {
+                        <tr class="pickup-row"
+                            data-point="@item.PickupPoint1?.ToLower()"
+                            data-time="@item.Time?.ToString()?.ToLower()">
+                            <td>@rowNum</td>
+                            <td>@item.PickupPoint1</td>
+                            <td>@(item.Time.HasValue ? item.Time.Value.ToString("hh:mm tt") : "—")</td>
+                            <td>
+                                <a href='@Url.Action("Edit", new { id = item.PickupPointId })'>
+                                    <img src='~/images/edit (1).png' alt='Edit' style='width:22px;height:22px;' />
+                                </a>
+                                <a href='@Url.Action("Details", new { id = item.PickupPointId })'>
+                                    <img src='~/images/investigation_1723432.png' alt='Details' style='width:22px;height:22px;' />
+                                </a>
+                                <a href='@Url.Action("Delete", new { id = item.PickupPointId })'>
+                                    <img src='~/images/delete (1).png' alt='Delete' style='width:22px;height:22px;' />
+                                </a>
+                            </td>
+                        </tr>
+                        rowNum++;
+                    }
+                </tbody>
+            </table>
+        </div>
 
-        @if (currentPage < totalPages)
-        {
-            <a href="@Url.Action("Index", new { page = currentPage + 1 })">Next</a>
-        }
     </div>
-
-
-</div>
+}
 
 <script>
-    // Function to toggle search bar visibility
-    document.getElementById('searchIcon').onclick = function () {
-        const searchInput = document.getElementById('searchInput');
-        searchInput.style.display = searchInput.style.display === 'none' ? 'block' : 'none';
-        if (searchInput.style.display === 'block') {
-            searchInput.focus(); // Focus on search input when opened
-        }
-    };
-
-    // Function to filter the table based on search input
-    function filterTable() {
-        const input = document.getElementById('searchInput').value.toLowerCase(); // Get search input and convert to lowercase
-        const table = document.querySelector('.table'); // Reference the table
-        const rows = table.getElementsByTagName('tr');  // Get all rows of the table
-
-        for (let i = 1; i < rows.length; i++) { // Start at 1 to skip the header row
-            const pickupPointCell = rows[i].getElementsByTagName('td')[1]; // PickupPoint1 column
-            const timeCell = rows[i].getElementsByTagName('td')[2]; // Time column
-            const cityCell = rows[i].getElementsByTagName('td')[3]; // City column
-            const packageCell = rows[i].getElementsByTagName('td')[4]; // Package column
-
-            // Get the text content from each cell and convert it to lowercase
-            const pickupPointText = pickupPointCell ? pickupPointCell.innerText.toLowerCase() : '';
-            const timeText = timeCell ? timeCell.innerText.toLowerCase() : '';
-            const cityText = cityCell ? cityCell.innerText.toLowerCase() : '';
-            const packageText = packageCell ? packageCell.innerText.toLowerCase() : '';
-
-            // Check if the input matches any of the columns (PickupPoint1, Time, City, Package)
-            if (
-                pickupPointText.includes(input) ||
-                timeText.includes(input) ||
-                cityText.includes(input) ||
-                packageText.includes(input)
-            ) {
-                rows[i].style.display = ''; // Show the row if a match is found
-            } else {
-                rows[i].style.display = 'none'; // Hide the row if no match
-            }
-        }
+    // Toggle individual group
+    function toggleGroup(id, header) {
+        var body = document.getElementById(id);
+        var isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'block';
+        header.classList.toggle('open', !isOpen);
     }
+
+    // Expand / Collapse all
+    function toggleAll(expand) {
+        document.querySelectorAll('.pkg-body').forEach(function (b) { b.style.display = expand ? 'block' : 'none'; });
+        document.querySelectorAll('.pkg-header').forEach(function (h) { h.classList.toggle('open', expand); });
+    }
+
+    // Search — filters groups and rows
+    function filterGroups() {
+        var q = document.getElementById('searchInput').value.toLowerCase().trim();
+        document.querySelectorAll('.pkg-group').forEach(function (group) {
+            var pkgName = group.dataset.package || '';
+            var cityName = group.dataset.city || '';
+            var rows = group.querySelectorAll('.pickup-row');
+            var anyVisible = false;
+
+            rows.forEach(function (row) {
+                var point = row.dataset.point || '';
+                var time  = row.dataset.time  || '';
+                var match = !q || pkgName.includes(q) || cityName.includes(q) || point.includes(q) || time.includes(q);
+                row.style.display = match ? '' : 'none';
+                if (match) anyVisible = true;
+            });
+
+            group.style.display = anyVisible ? '' : 'none';
+            if (anyVisible && q) {
+                // Auto-open matching groups when searching
+                var body = group.querySelector('.pkg-body');
+                var header = group.querySelector('.pkg-header');
+                body.style.display = 'block';
+                header.classList.add('open');
+            }
+        });
+    }
+
+    // Search icon toggle
+    document.getElementById('searchIcon').onclick = function () {
+        var inp = document.getElementById('searchInput');
+        inp.style.display = inp.style.display === 'none' ? 'inline-block' : 'none';
+        if (inp.style.display === 'inline-block') inp.focus();
+    };
 </script>
-
-
