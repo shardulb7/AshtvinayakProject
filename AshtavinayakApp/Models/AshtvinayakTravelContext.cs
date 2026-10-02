@@ -226,6 +226,12 @@ public partial class AshtvinayakTravelContext : DbContext
                 .WithMany(p => p.DropUps)
                 .HasForeignKey(d => d.CityId)
                 .HasConstraintName("FK_DropUp_Cities");
+
+            entity.HasOne(d => d.Package)
+                .WithMany()
+                .HasForeignKey(d => d.PackageId)
+                .HasConstraintName("FK_DropUp_Packages")
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
 

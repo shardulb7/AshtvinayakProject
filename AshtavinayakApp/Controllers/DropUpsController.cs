@@ -30,21 +30,16 @@ namespace AshtavinayakAPP.Controllers
             }
             base.OnActionExecuting(context);
         }
-        public async Task<IActionResult> Index(int page = 1)
+        public async Task<IActionResult> Index()
         {
-            int pageSize = 10; // Number of records per page
-            int totalRecords = await _context.DropUps.Where(x => !x.IsDeleted).CountAsync(); // HIGH-09: exclude soft-deleted from count
-            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize); // Calculate total pages
-
-            var dropUps = await _context.DropUps.Where(x => !x.IsDeleted)
-                                         .Include(d => d.City)
-                                         .OrderByDescending(d => d.DroppointId) // Ordering by DropUpId in descending order
-                                         .Skip((page - 1) * pageSize) // Skip records for previous pages
-                                         .Take(pageSize) // Take only the records for the current page
-                                         .ToListAsync();
-
-            ViewData["TotalPages"] = totalPages;
-            ViewData["CurrentPage"] = page;
+            // Load all drop points ordered by package then drop point name — grouped in view by package
+            var dropUps = await _context.DropUps
+                .Where(x => !x.IsDeleted)
+                .Include(d => d.City)
+                .Include(d => d.Package)
+                .OrderBy(d => d.Package != null ? d.Package.PackageName : "zzz")
+                .ThenBy(d => d.DropPoint)
+                .ToListAsync();
 
             return View(dropUps);
         }
