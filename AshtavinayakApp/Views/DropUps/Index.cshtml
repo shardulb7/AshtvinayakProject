@@ -2,9 +2,16 @@
 
 @{
     ViewData["Title"] = "Drop Point List";
-    // Group by Package
+    // Build package name lookup from ViewBag
+    var pkgNames = ViewBag.PackageNames as Dictionary<int, string> ?? new Dictionary<int, string>();
+
+    // Group by PackageId
     var groups = Model
-        .GroupBy(d => new { PackageName = d.Package?.PackageName ?? "—", CityName = d.City?.CityName ?? "—", d.PackageId })
+        .GroupBy(d => new {
+            PackageName = d.PackageId.HasValue && pkgNames.ContainsKey(d.PackageId.Value) ? pkgNames[d.PackageId.Value] : "—",
+            CityName    = d.City?.CityName ?? "—",
+            d.PackageId
+        })
         .OrderBy(g => g.Key.PackageName)
         .ToList();
 }

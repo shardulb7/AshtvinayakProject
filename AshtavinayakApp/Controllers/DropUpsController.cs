@@ -32,14 +32,19 @@ namespace AshtavinayakAPP.Controllers
         }
         public async Task<IActionResult> Index()
         {
-            // Load all drop points ordered by package then drop point name — grouped in view by package
+            // Load all drop points ordered by packageId then drop point name
             var dropUps = await _context.DropUps
                 .Where(x => !x.IsDeleted)
                 .Include(d => d.City)
-                .Include(d => d.Package)
-                .OrderBy(d => d.Package != null ? d.Package.PackageName : "zzz")
+                .OrderBy(d => d.PackageId)
                 .ThenBy(d => d.DropPoint)
                 .ToListAsync();
+
+            // Load package names separately as a dictionary (avoids nav property on DropUp)
+            var packageNames = await _context.Packages
+                .Where(x => !x.IsDeleted)
+                .ToDictionaryAsync(p => p.PackageId, p => p.PackageName);
+            ViewBag.PackageNames = packageNames;
 
             return View(dropUps);
         }

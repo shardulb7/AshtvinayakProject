@@ -18,6 +18,4 @@ public partial class DropUp
     public bool IsDeleted { get; set; }
 
     public virtual City? City { get; set; }
-
-    public virtual Package? Package { get; set; }
 }
