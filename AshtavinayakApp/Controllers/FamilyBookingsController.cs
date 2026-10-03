@@ -98,9 +98,25 @@ namespace AshtavinayakAPP.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(familyBooking);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(familyBooking);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"Save failed: {ex.InnerException?.Message ?? ex.Message}");
+                }
+            }
+            else
+            {
+                // Log which fields are invalid (visible in Azure logs)
+                var errors = ModelState.Where(x => x.Value.Errors.Any())
+                    .Select(x => $"{x.Key}: {string.Join(", ", x.Value.Errors.Select(e => e.ErrorMessage))}");
+                Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(
+                    HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FamilyBookingsController>>(),
+                    "Car booking ModelState invalid: {Errors}", string.Join(" | ", errors));
             }
             ViewData["UserId"]    = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName");
             ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName");
