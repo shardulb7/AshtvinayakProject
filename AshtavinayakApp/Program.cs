@@ -216,11 +216,13 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
         "In Production, set the environment variable 'ConnectionStrings__DefaultConnection'.");
 
 builder.Services.AddDbContext<AshtvinayakTravelContext>(options =>
-    options.UseSqlServer(connectionString, sqlOptions =>
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null)));
+    options
+        .UseSqlServer(connectionString, sqlOptions =>
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null))
+        .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
 // Readiness includes DB connectivity; liveness is process-alive only (see MapHealthChecks below).
 builder.Services.AddHealthChecks()
