@@ -44,15 +44,28 @@ namespace AshtavinayakAPP.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var ashtvinayakTravelAppContext = _context.Bookings.Where(x=>!x.IsDeleted&&x.TripId!=null)
+            var bookings = await _context.Bookings
+                .Where(x => !x.IsDeleted && x.TripId != null)
                 .Include(b => b.PickupPoint)
                 .Include(b => b.Trip)
                 .Include(b => b.User)
-                .OrderByDescending(b => b.BookingId);
+                .OrderByDescending(b => b.BookingId)
+                .ToListAsync();
 
-            ViewBag.Trips = await _context.Trips.Where(x=>!x.IsDeleted).ToListAsync();  // Get list of trips for the dropdown filter
+            ViewBag.Trips = await _context.Trips.Where(x => !x.IsDeleted).ToListAsync();
 
-            return View(await ashtvinayakTravelAppContext.ToListAsync());
+            // Load booking seats grouped by BookingId for seat number / adult / child counts
+            var bookingIds = bookings.Select(b => b.BookingId).ToList();
+            var allSeats = await _context.BookingSeats
+                .Where(s => s.BookingId.HasValue && bookingIds.Contains(s.BookingId.Value) && !s.IsDeleted)
+                .ToListAsync();
+
+            ViewBag.SeatNumbers      = allSeats.GroupBy(s => s.BookingId!.Value).ToDictionary(g => g.Key, g => string.Join(", ", g.Select(s => s.SeatNumber).Where(s => !string.IsNullOrEmpty(s))));
+            ViewBag.Adults           = allSeats.GroupBy(s => s.BookingId!.Value).ToDictionary(g => g.Key, g => g.Sum(s => s.Adults ?? 0));
+            ViewBag.ChildWithSeat    = allSeats.GroupBy(s => s.BookingId!.Value).ToDictionary(g => g.Key, g => g.Sum(s => s.Childwithseat ?? 0));
+            ViewBag.ChildWithoutSeat = allSeats.GroupBy(s => s.BookingId!.Value).ToDictionary(g => g.Key, g => g.Sum(s => s.Childwithoutseat ?? 0));
+
+            return View(bookings);
         }
 
 

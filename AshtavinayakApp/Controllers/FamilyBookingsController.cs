@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -45,15 +45,26 @@ namespace AshtavinayakAPP.Controllers
             int totalRecords = await _context.FamilyBookings.Where(x => !x.IsDeleted).CountAsync();
             int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
 
-            var familyBookings = await _context.FamilyBookings.Include(x=>x.User).Include(x=>x.Package)
-    .Where(f => !f.IsDeleted)
-    .OrderByDescending(f => f.FamilyId)
-    .Skip((page - 1) * pageSize)
-    .Take(pageSize)
-    .ToListAsync();
+            var familyBookings = await _context.FamilyBookings
+                .Include(x => x.User)
+                .Include(x => x.Package)
+                .Where(f => !f.IsDeleted)
+                .OrderByDescending(f => f.FamilyId)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
+            // Load linked Booking records for pickup point, payment info
+            var bookingIds = familyBookings.Select(f => f.BookingId).Distinct().ToList();
+            var linkedBookings = await _context.Bookings
+                .Where(b => bookingIds.Contains(b.BookingId))
+                .ToListAsync();
 
-            ViewData["TotalPages"] = totalPages;
+            ViewBag.PickupPoints  = linkedBookings.ToDictionary(b => b.BookingId, b => b.PickUpPointName ?? "—");
+            ViewBag.TotalPayments = linkedBookings.ToDictionary(b => b.BookingId, b => b.TotalPayment);
+            ViewBag.Advances      = linkedBookings.ToDictionary(b => b.BookingId, b => b.Advance);
+
+            ViewData["TotalPages"]  = totalPages;
             ViewData["CurrentPage"] = page;
 
             return View(familyBookings);

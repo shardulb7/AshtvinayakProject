@@ -1,24 +1,30 @@
-﻿@model IEnumerable<AshtavinayakAPP.Models.FamilyBooking>
+@model IEnumerable<AshtavinayakAPP.Models.FamilyBooking>
+@using System.Collections.Generic
 
 @{
-    ViewData["Title"] = "Family Booking List";
+    ViewData["Title"] = "Car Booking List";
+    var pickupPoints  = (ViewBag.PickupPoints  as Dictionary<int, string>)   ?? new Dictionary<int, string>();
+    var totalPayments = (ViewBag.TotalPayments as Dictionary<int, decimal?>) ?? new Dictionary<int, decimal?>();
+    var advances      = (ViewBag.Advances      as Dictionary<int, decimal?>) ?? new Dictionary<int, decimal?>();
 }
 
 <link href="~/CSS/Category/index.css" rel="stylesheet" />
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <div class="d-flex justify-content-between align-items-center w-100">
-    <h2>Family Booking List</h2>
+    <h2>Car Booking List</h2>
     <div class="lefticons d-flex align-items-center">
-        <input type="text" id="searchInput" placeholder="Search..." style="padding: 5px; width: 200px; margin-right: 5px; display: none; border: none; margin-top:-17px;" onkeyup="filterTable()" />
+        <input type="text" id="searchInput" placeholder="Search..."
+               style="padding:5px; width:200px; margin-right:5px; display:none; border:none; margin-top:-17px;"
+               onkeyup="filterTable()" />
         <p>
-            <a href="javascript:void(0);" id="searchIcon" class="btn" style="padding: 5px 10px; margin-right: 5px; border: 1px solid grey; background-color: white; color: black;" title='Search'>
-                <i class="fas fa-search" style="color: black;"></i>
+            <a href="javascript:void(0);" id="searchIcon" class="btn"
+               style="padding:5px 10px; margin-right:5px; border:1px solid grey; background-color:white; color:black;" title='Search'>
+                <i class="fas fa-search" style="color:black;"></i>
             </a>
         </p>
         <p>
-            <a href="@Url.Action("Create")" class="btn btn-primary" style="padding: 5px 10px;" title='Add New'>
+            <a href="@Url.Action("Create")" class="btn btn-primary" style="padding:5px 10px;" title='Add New'>
                 <i class="fas fa-plus"></i>
             </a>
         </p>
@@ -26,19 +32,23 @@
 </div>
 
 <div class="table-container">
-    <table class="table" id="familyBookingTable">
+    <table class="table" id="carBookingTable" style="font-size:0.85rem;">
         <thead>
             <tr>
-                <th>Serial No</th>
+                <th>Sr No</th>
                 <th>Booking Date</th>
-                <th>Travel Date</th>
+                <th>Trip Date</th>
+                <th>Pickup Time</th>
+                <th>Trip Name</th>
                 <th>Car Type</th>
-                <th>Package Name</th>
                 <th>User Name</th>
-                <th>User Number</th>
-                <th>Adult</th>
-                <th>ChildWithSeat</th>
-                <th>Childwithoutseat</th>
+                <th>Phone</th>
+                <th>Pickup Point</th>
+                <th>Adults</th>
+                <th>Child w/Seat</th>
+                <th>Child w/o Seat</th>
+                <th>Total Payment</th>
+                <th>Advance</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -48,40 +58,32 @@
             }
             @foreach (var item in Model)
             {
+                int bid = item.BookingId;
+                string pickup   = pickupPoints.ContainsKey(bid)  ? pickupPoints[bid]  : "-";
+                string totalPay = totalPayments.ContainsKey(bid) && totalPayments[bid].HasValue ? "Rs." + totalPayments[bid]!.Value.ToString("N0") : "-";
+                string adv      = advances.ContainsKey(bid)      && advances[bid].HasValue      ? "Rs." + advances[bid]!.Value.ToString("N0")      : "-";
                 <tr>
                     <td>@serialNumber</td>
+                    <td>@(item.BookingDate.HasValue ? item.BookingDate.Value.ToString("dd-MM-yyyy") : "NA")</td>
+                    <td>@item.Date.ToString("dd-MM-yyyy")</td>
+                    <td>@item.Time.ToString("hh:mm tt")</td>
+                    <td>@(item.Package != null ? item.Package.PackageName : "-")</td>
+                    <td>@item.CarType</td>
+                    <td>@(item.User != null ? item.User.UserName : "-")</td>
+                    <td>@(item.User != null ? item.User.PhoneNumber : "-")</td>
+                    <td>@pickup</td>
+                    <td>@(item.Adults ?? 0)</td>
+                    <td>@(item.Childwithseat ?? 0)</td>
+                    <td>@(item.Childwithoutseat ?? 0)</td>
+                    <td>@totalPay</td>
+                    <td>@adv</td>
                     <td>
-                        @(item.BookingDate.HasValue? item.BookingDate.Value.ToString("dd-MM-yyyy") : "N/A")
-                    </td>
-                    <td>
-                        @(item.Time.ToString("dd-MM-yyyy hh:mm tt"))
-                    </td>
-
-                    <td>@Html.DisplayFor(modelItem => item.CarType)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Package.PackageName)</td>
-                    <td>@Html.DisplayFor(modelItem => item.User.UserName)</td>
-                    <td>@Html.DisplayFor(modelItem => item.User.PhoneNumber)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Adults)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Childwithseat)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Childwithoutseat)</td>
-               
-
-@*                     <td>@Html.DisplayFor(modelItem => item.UserId)</td>
- *@                    <td>
-                        <a href='@Url.Action("Edit", new { id = item.FamilyId })'>
-                            <img src='~/images/edit (1).png' alt='Edit' style='width: 25px; height: 25px;' />
-                        </a>
-                        <a href='@Url.Action("Details", new { id = item.FamilyId })'>
-                            <img src='~/images/investigation_1723432.png' alt='Details' style='width: 25px; height: 25px;' />
-                        </a>
-                        <a href='@Url.Action("Delete", new { id = item.FamilyId })'>
-                            <img src='~/images/delete (1).png' alt='Delete' style='width: 25px; height: 25px;' />
-                        </a>
+                        <a href='@Url.Action("Edit",    new { id = item.FamilyId })'><img src='~/images/edit (1).png'                   alt='Edit'    style='width:22px;height:22px;' /></a>
+                        <a href='@Url.Action("Details", new { id = item.FamilyId })'><img src='~/images/investigation_1723432.png' alt='Details' style='width:22px;height:22px;' /></a>
+                        <a href='@Url.Action("Delete",  new { id = item.FamilyId })'><img src='~/images/delete (1).png'               alt='Delete'  style='width:22px;height:22px;' /></a>
                     </td>
                 </tr>
-                {
-                    serialNumber++;
-                }
+                serialNumber++;
             }
         </tbody>
     </table>
@@ -91,12 +93,10 @@
         {
             <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] - 1 })">Previous</a>
         }
-
         @for (int i = 1; i <= (int)ViewData["TotalPages"]; i++)
         {
             <a href="@Url.Action("Index", new { page = i })" class="@(i == (int)ViewData["CurrentPage"] ? "active" : "")">@i</a>
         }
-
         @if (ViewData["CurrentPage"] != null && (int)ViewData["CurrentPage"] < (int)ViewData["TotalPages"])
         {
             <a href="@Url.Action("Index", new { page = (int)ViewData["CurrentPage"] + 1 })">Next</a>
@@ -106,30 +106,15 @@
 
 <script>
     document.getElementById('searchIcon').onclick = function () {
-        const searchInput = document.getElementById('searchInput');
-        searchInput.style.display = searchInput.style.display === 'none' ? 'block' : 'none';
-        if (searchInput.style.display === 'block') {
-            searchInput.focus();
-        }
+        var s = document.getElementById('searchInput');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        if (s.style.display === 'block') s.focus();
     };
 
     function filterTable() {
-        const input = document.getElementById('searchInput').value.toLowerCase();
-        const table = document.querySelector('.table');
-        const rows = table.getElementsByTagName('tr');
-
-        for (let i = 1; i < rows.length; i++) {
-            const cells = rows[i].getElementsByTagName('td');
-            let rowContainsSearchText = false;
-
-            for (let j = 0; j < cells.length; j++) {
-                const cellText = cells[j].innerText.toLowerCase();
-                if (cellText.includes(input)) {
-                    rowContainsSearchText = true;
-                    break;
-                }
-            }
-            rows[i].style.display = rowContainsSearchText ? '' : 'none';
-        }
+        var input = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll("#carBookingTable tbody tr").forEach(function(row) {
+            row.style.display = row.innerText.toLowerCase().includes(input) ? '' : 'none';
+        });
     }
 </script>

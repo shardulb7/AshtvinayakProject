@@ -1,45 +1,42 @@
 @model IEnumerable<AshtavinayakAPP.Models.Booking>
+@using System.Collections.Generic
 
 @{
-    ViewData["Title"] = "Booking Index";
+    ViewData["Title"] = "Bus Booking List";
+    var seatNumbers      = (ViewBag.SeatNumbers      as Dictionary<int, string>)  ?? new Dictionary<int, string>();
+    var adults           = (ViewBag.Adults           as Dictionary<int, int>)     ?? new Dictionary<int, int>();
+    var childWithSeat    = (ViewBag.ChildWithSeat    as Dictionary<int, int>)     ?? new Dictionary<int, int>();
+    var childWithoutSeat = (ViewBag.ChildWithoutSeat as Dictionary<int, int>)     ?? new Dictionary<int, int>();
 }
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-
-
 <link href="~/CSS/bookingindex.css" rel="stylesheet" />
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery for AJAX -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <div class="booking-container d-flex justify-content-between align-items-center w-100">
-    <h2>Booking List</h2>
+    <h2>Bus Booking List</h2>
     <div class="lefticons d-flex align-items-center">
         <select id="tripFilter" class="form-control" style="width: 200px; margin-right: 5px; margin-top:-16px;">
             <option value="">All Trips</option>
-            @foreach (var trip in Model
-            .Where(b => b.Trip != null)
-            .Select(b => b.Trip.TourName)
-            .Distinct())
+            @foreach (var trip in Model.Where(b => b.Trip != null).Select(b => b.Trip!.TourName).Distinct())
             {
                 <option value="@trip">@trip</option>
             }
-            <option value="car booking">Car Booking</option>
         </select>
-
-        <!-- Search Bar -->
-        <input type="text" id="searchInput" placeholder="Search..." style="padding: 5px; width: 200px; margin-right: 5px; display: none; border: none; margin-top:-17px;" onkeyup="filterTable()" />
+        <input type="text" id="searchInput" placeholder="Search..."
+               style="padding:5px; width:200px; margin-right:5px; display:none; border:none; margin-top:-17px;"
+               onkeyup="filterTable()" />
         <p>
-            <a href="javascript:void(0);" id="searchIcon" class="btn" style="padding: 5px 10px; margin-right: 5px; border: 1px solid grey; background-color: white; color: black;" title='Search'>
-                <i class="fas fa-search" style="color: black;"></i>
+            <a href="javascript:void(0);" id="searchIcon" class="btn"
+               style="padding:5px 10px; margin-right:5px; border:1px solid grey; background-color:white; color:black;" title='Search'>
+                <i class="fas fa-search" style="color:black;"></i>
             </a>
         </p>
-
         <p>
-            <a href="@Url.Action("Create")" class="btn btn-primary" style="padding: 5px 10px;" title='Add New'>
+            <a href="@Url.Action("Create")" class="btn btn-primary" style="padding:5px 10px;" title='Add New'>
                 <i class="fas fa-plus"></i>
             </a>
         </p>
-        <!-- Export Buttons -->
         <div class="export-container">
             <p style="margin-left:5px;">
                 <a href="javascript:void(0);" class="btn btn-success" title="Export to Excel" onclick="exportToExcel()">
@@ -54,49 +51,52 @@
 </div>
 
 <div class="table-container">
-    <table class="table" id="bookingTable">
+    <table class="table" id="bookingTable" style="font-size:0.85rem;">
         <thead>
             <tr>
-                <th>Serial No</th>
-                <th>@Html.DisplayNameFor(model => model.BookingDate)</th>
-                @* <th>@Html.DisplayNameFor(model => model.Status)</th> *@
-                <th>@Html.DisplayNameFor(model => model.TotalPayment)</th>
-                <th>@Html.DisplayNameFor(model => model.Advance)</th>
-                <th>@Html.DisplayNameFor(model => model.PickupPoint.PickupPoint1)</th>
-                <th>@Html.DisplayNameFor(model => model.Droppoint)</th>
-                <th>Trip</th>
+                <th>Sr No</th>
+                <th>Booking Date</th>
+                <th>Trip Date</th>
+                <th>Trip Name</th>
+                <th>User Name</th>
+                <th>Phone</th>
+                <th>Pickup Point</th>
+                <th>Drop Point</th>
+                <th>Adults</th>
+                <th>Child w/Seat</th>
+                <th>Child w/o Seat</th>
+                <th>Seat No</th>
                 <th>Room Type</th>
-                <th>@Html.DisplayNameFor(model => model.User.UserName)</th>
-                <th>@Html.DisplayNameFor(model => model.User.PhoneNumber)</th>
+                <th>Total Payment</th>
+                <th>Advance</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody>
             @{
-                int serialNumber = 1; // Initialize serial number counter
+                int serialNumber = 1;
             }
             @foreach (var item in Model)
             {
-                // Set data-trip attribute: if Trip is null, use "car booking"
-                var tripDisplay = item.Trip != null ? item.Trip.TourName : "Car Booking";
+                string tripDisplay = item.Trip != null ? item.Trip.TourName ?? "" : "";
+                int bid = item.BookingId;
+                string seatNum = seatNumbers.ContainsKey(bid)      ? seatNumbers[bid]      : "-";
+                string adultCt = adults.ContainsKey(bid)           ? adults[bid].ToString() : "-";
+                string cwsCt   = childWithSeat.ContainsKey(bid)    ? childWithSeat[bid].ToString() : "-";
+                string cwosCt  = childWithoutSeat.ContainsKey(bid) ? childWithoutSeat[bid].ToString() : "-";
                 <tr data-trip="@tripDisplay.ToLower()">
                     <td>@serialNumber</td>
                     <td>@(item.BookingDate.HasValue ? item.BookingDate.Value.ToString("dd-MM-yyyy") : "NA")</td>
-                    @* <td>@Html.DisplayFor(modelItem => item.Status)</td> *@
-                    <td>@Html.DisplayFor(modelItem => item.TotalPayment)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Advance)</td>
-                    <td>@Html.DisplayFor(modelItem => item.PickupPoint.PickupPoint1)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Droppoint)</td>
-                    <td>
-                        @if (item.Trip != null)
-                        {
-                            @Html.DisplayFor(modelItem => item.Trip.TourName)
-                        }
-                        else
-                        {
-                            @:Car Booking
-                        }
-                    </td>
+                    <td>@(item.Trip != null ? item.Trip.TripDate.ToString("dd-MM-yyyy") : "NA")</td>
+                    <td>@(tripDisplay != "" ? tripDisplay : "NA")</td>
+                    <td>@(item.User != null ? item.User.UserName : "-")</td>
+                    <td>@(item.User != null ? item.User.PhoneNumber : "-")</td>
+                    <td>@(item.PickupPoint != null ? item.PickupPoint.PickupPoint1 : item.PickUpPointName ?? "-")</td>
+                    <td>@(item.Droppoint ?? "-")</td>
+                    <td>@adultCt</td>
+                    <td>@cwsCt</td>
+                    <td>@cwosCt</td>
+                    <td>@seatNum</td>
                     <td>
                         @if (!string.IsNullOrWhiteSpace(item.RoomType))
                         {
@@ -104,27 +104,18 @@
                         }
                         else
                         {
-                            @:—
+                            <text>-</text>
                         }
                     </td>
-                    <td>@Html.DisplayFor(modelItem => item.User.UserName)</td>
-                    <td>@Html.DisplayFor(modelItem => item.User.PhoneNumber)</td>
+                    <td>@(item.TotalPayment.HasValue ? "Rs." + item.TotalPayment.Value.ToString("N0") : "-")</td>
+                    <td>@(item.Advance.HasValue ? "Rs." + item.Advance.Value.ToString("N0") : "-")</td>
                     <td>
-                        <a href='@Url.Action("Edit", new { id = item.BookingId })'>
-                            <img src='~/images/edit (1).png' alt='Edit' style='width: 25px; height: 25px;' />
-                        </a>
-                        <a href='@Url.Action("Details", new { id = item.BookingId })'>
-                            <img src='~/images/investigation_1723432.png' alt='Details' style='width: 25px; height: 25px;' />
-                        </a>
-                         <a href='@Url.Action("Delete", new { id = item.BookingId })'>
-                            <img src='~/images/delete (1).png' alt='Delete' style='width: 25px; height: 25px;' />
-                        </a>
-                        <a href='@Url.Action("Index", "BookingSeats", new { bookingId = item.BookingId })' class="btn btn-outline-primary btn-sm" title="View Booking Seat">
-                            <i class="bi bi-eye"></i>
-                        </a>
+                        <a href='@Url.Action("Edit",    new { id = item.BookingId })'><img src='~/images/edit (1).png'                   alt='Edit'    style='width:22px;height:22px;' /></a>
+                        <a href='@Url.Action("Details", new { id = item.BookingId })'><img src='~/images/investigation_1723432.png' alt='Details' style='width:22px;height:22px;' /></a>
+                        <a href='@Url.Action("Delete",  new { id = item.BookingId })'><img src='~/images/delete (1).png'               alt='Delete'  style='width:22px;height:22px;' /></a>
                     </td>
                 </tr>
-                serialNumber++; // Increment serial number
+                serialNumber++;
             }
         </tbody>
     </table>
@@ -135,97 +126,45 @@
 
 <script>
     function exportToExcel() {
-        var tripFilter = document.getElementById("tripFilter").value; // Get selected trip filter
-        window.location.href = '@Url.Action("ExportToExcel", "Bookings")?tripFilter=' + tripFilter; // Redirect with filter
+        var tripFilter = document.getElementById("tripFilter").value;
+        window.location.href = '@Url.Action("ExportToExcel", "Bookings")?tripFilter=' + tripFilter;
     }
 
     function exportToPDF() {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        // Add title
-        doc.text('Booking List', 14, 10);
-
-        // Define table headers
-        const tableHeaders = ["Serial No", "Booking Date", "Total Payment", "Advance", "Pickup Point", "Drop Point", "Trip", "Room Type", "User"];
-
+        const doc = new jsPDF({ orientation: 'landscape' });
+        doc.text('Bus Booking List', 14, 10);
+        const headers = [["Sr", "Booking Date", "Trip Date", "Trip Name", "User", "Phone", "Pickup", "Drop", "Adults", "CwS", "CwoS", "Seat No", "Room", "Total", "Advance"]];
         const rows = [];
-        const allRows = document.querySelectorAll("#bookingTable tbody tr");
-
-        const searchInput = document.getElementById('searchInput').value.toLowerCase();
-        const tripFilter = document.getElementById('tripFilter').value.toLowerCase();
-
-        allRows.forEach((row, index) => {
-            const tripName = row.getAttribute('data-trip');
-            const textContent = row.innerText.toLowerCase();
-
-            const matchesSearch = textContent.includes(searchInput);
-            const matchesTrip = tripFilter === "" || tripName === tripFilter;
-
-            if (matchesSearch && matchesTrip) {
-                const rowData = [];
-                const cells = row.getElementsByTagName("td");
-
-                rowData.push(index + 1); // Serial No
-                rowData.push(cells[1].innerText); // Booking Date
-                rowData.push(cells[2].innerText); // Total Payment
-                rowData.push(cells[3].innerText); // Advance
-                rowData.push(cells[4].innerText); // Pickup Point
-                rowData.push(cells[5].innerText); // Drop Point
-                rowData.push(cells[6].innerText); // Trip
-                rowData.push(cells[7].innerText); // Room Type
-                rowData.push(cells[8].innerText); // User
-
-                rows.push(rowData);
+        document.querySelectorAll("#bookingTable tbody tr").forEach(function(row) {
+            if (row.style.display !== "none") {
+                var cells = row.querySelectorAll("td");
+                if (cells.length > 0) {
+                    rows.push(Array.from(cells).slice(0, 15).map(function(c) { return c.innerText; }));
+                }
             }
         });
-
-        // Generate the PDF table
-        doc.autoTable({
-            head: [tableHeaders],
-            body: rows,
-            startY: 20,
-            theme: 'grid',
-            headStyles: { fillColor: [22, 160, 133] },
-            styles: { fontSize: 10 },
-            columnStyles: { 0: { cellWidth: 20 } },
-        });
-
-        // Save the PDF
-        doc.save('BookingList.pdf');
+        doc.autoTable({ head: headers, body: rows, startY: 16, theme: 'grid', headStyles: { fillColor: [22, 160, 133] }, styles: { fontSize: 7 } });
+        doc.save('BusBookingList.pdf');
     }
 
-    // Function to toggle search bar visibility
     document.getElementById('searchIcon').onclick = function () {
-        const searchInput = document.getElementById('searchInput');
-        searchInput.style.display = searchInput.style.display === 'none' ? 'block' : 'none';
-        if (searchInput.style.display === 'block') {
-            searchInput.focus(); // Focus on search input when opened
-        }
+        var s = document.getElementById('searchInput');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        if (s.style.display === 'block') s.focus();
     };
 
-    document.getElementById('tripFilter').onchange = function () {
-        filterTable();
-    };
+    document.getElementById('tripFilter').onchange = function() { filterTable(); };
 
-    // Function to filter the table based on search input and trip filter
     function filterTable() {
-        const searchInput = document.getElementById('searchInput').value.toLowerCase();
-        const tripFilter = document.getElementById('tripFilter').value.toLowerCase();
-        const rows = document.querySelectorAll("#bookingTable tbody tr");
-
-        rows.forEach(row => {
-            const tripName = row.getAttribute('data-trip').toLowerCase();
-            const textContent = row.innerText.toLowerCase();
-
-            const matchesSearch = textContent.includes(searchInput);
-            const matchesTrip = tripFilter === "" || tripName.includes(tripFilter);
-
-            if (matchesSearch && matchesTrip) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
+        var searchInput = document.getElementById('searchInput').value.toLowerCase();
+        var tripFilter  = document.getElementById('tripFilter').value.toLowerCase();
+        document.querySelectorAll("#bookingTable tbody tr").forEach(function(row) {
+            var tripName  = (row.getAttribute('data-trip') || '').toLowerCase();
+            var text      = row.innerText.toLowerCase();
+            var mSearch   = text.includes(searchInput);
+            var mTrip     = !tripFilter || tripName.includes(tripFilter);
+            row.style.display = mSearch && mTrip ? '' : 'none';
         });
     }
 </script>

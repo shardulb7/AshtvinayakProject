@@ -1,4 +1,4 @@
-﻿/* ==============================
+/* ==============================
    FONT & GLOBAL SETTINGS
 ============================== */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
@@ -164,7 +164,8 @@ a {
 .sidebar-nav {
     flex: 1 1 auto;
     overflow-y: auto;
-    scrollbar-width: none;
+    scrollbar-width: thin;
+    scrollbar-color: #D44206 #fce6e6;
     padding: 0;
     margin-top: 20px;
 }
