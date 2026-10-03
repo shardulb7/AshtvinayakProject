@@ -1,4 +1,4 @@
-﻿@model AshtavinayakAPP.Models.Booking
+@model AshtavinayakAPP.Models.Booking
 
 @{
     ViewData["Title"] = "Edit";
@@ -8,71 +8,123 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="d-flex justify-content-center align-items-center">
-    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 60%;">
 
         <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
-            <h4>Edit Booking</h4>
+            <h4>Edit Bus Booking</h4>
             <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
         </div>
         <hr />
 
         <form id="bookingForm" asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div asp-validation-summary="All" class="text-danger"></div>
             <input type="hidden" asp-for="BookingId" />
+            <input type="hidden" asp-for="IsDeleted" />
 
-            <div class="form-horizontal">
-                <div class="form-group">
-                    <label asp-for="UserId" class="control-label">User</label><span style="color: red;">*</span>
+            <div class="row">
+                <!-- User -->
+                <div class="form-group col-md-6 mb-2">
+                    <label asp-for="UserId" class="control-label">User Name</label><span style="color: red;">*</span>
                     <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId" required>
                         <option value="" disabled selected>Select User</option>
                     </select>
                     <span asp-validation-for="UserId" class="text-danger"></span>
                 </div>
-
-                <div class="form-group">
-                    <label asp-for="TripId" class="control-label">Trip</label><span style="color: red;">*</span>
+                <!-- Trip -->
+                <div class="form-group col-md-6 mb-2">
+                    <label asp-for="TripId" class="control-label">Trip Name</label><span style="color: red;">*</span>
                     <select asp-for="TripId" class="form-control" asp-items="ViewBag.TripId" required>
                         <option value="" disabled selected>Select Trip</option>
                     </select>
                     <span asp-validation-for="TripId" class="text-danger"></span>
                 </div>
+            </div>
 
-                <div class="form-group">
+            <div class="row">
+                <!-- Pickup Point -->
+                <div class="form-group col-md-6 mb-2">
                     <label asp-for="PickupPointId" class="control-label">Pickup Point</label><span style="color: red;">*</span>
                     <select asp-for="PickupPointId" class="form-control" asp-items="ViewBag.PickupPointId" required>
                         <option value="" disabled selected>Select Pickup Point</option>
                     </select>
                     <span asp-validation-for="PickupPointId" class="text-danger"></span>
                 </div>
-
-                <div class="form-group">
-                    <label asp-for="Droppoint" class="control-label"></label><span style="color: red;">*</span>
-                    <input asp-for="Droppoint" class="form-control" required placeholder="Enter Droppoint" />
+                <!-- Drop Point -->
+                <div class="form-group col-md-6 mb-2">
+                    <label asp-for="Droppoint" class="control-label">Drop Point</label><span style="color: red;">*</span>
+                    <input asp-for="Droppoint" class="form-control" required placeholder="Enter Drop Point" />
                     <span asp-validation-for="Droppoint" class="text-danger"></span>
                 </div>
+            </div>
 
-                <div class="form-group">
+            <div class="row">
+                <!-- Booking Date -->
+                <div class="form-group col-md-6 mb-2">
                     <label asp-for="BookingDate" class="control-label">Booking Date</label><span style="color: red;">*</span>
                     <input asp-for="BookingDate" class="form-control" type="date" required />
                     <span asp-validation-for="BookingDate" class="text-danger"></span>
                 </div>
+                <!-- Room Type -->
+                <div class="form-group col-md-6 mb-2">
+                    <label asp-for="RoomType" class="control-label">Room Type</label>
+                    <select asp-for="RoomType" class="form-control">
+                        <option value="">-- Select Room Type --</option>
+                        <option value="Single">Single</option>
+                        <option value="Double">Double</option>
+                        <option value="Triple">Triple</option>
+                    </select>
+                </div>
+            </div>
 
-                <div class="form-group">
+            <div class="row">
+                <!-- Extra Adult -->
+                <div class="form-group col-md-4 mb-2">
+                    <label class="control-label">Extra adult (If any)</label>
+                    <input name="SeatAdults" id="SeatAdults" class="form-control" type="number" min="0" placeholder="0"
+                           value="@ViewBag.SeatAdults" />
+                </div>
+                <!-- Extra Kid With Seat -->
+                <div class="form-group col-md-4 mb-2">
+                    <label class="control-label">Extra kid (With seat- if any)</label>
+                    <input name="SeatChildwithseat" id="SeatChildwithseat" class="form-control" type="number" min="0" placeholder="0"
+                           value="@ViewBag.SeatChildwithseat" />
+                </div>
+                <!-- Extra Kid Without Seat -->
+                <div class="form-group col-md-4 mb-2">
+                    <label class="control-label">Extra kid (Without seat- if any)</label>
+                    <input name="SeatChildwithoutseat" id="SeatChildwithoutseat" class="form-control" type="number" min="0" placeholder="0"
+                           value="@ViewBag.SeatChildwithoutseat" />
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Seat Numbers -->
+                <div class="form-group col-md-12 mb-2">
+                    <label class="control-label">Seat Number(s)</label>
+                    <input name="SeatNumbers" id="SeatNumbers" class="form-control" placeholder="e.g. A1, A2, B3"
+                           value="@ViewBag.SeatNumbers" />
+                    <small class="text-muted">Comma-separated seat numbers</small>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Total Payment -->
+                <div class="form-group col-md-6 mb-2">
                     <label asp-for="TotalPayment" class="control-label">Total Payment</label><span style="color: red;">*</span>
-                    <input asp-for="TotalPayment" class="form-control" required placeholder="Enter Total Payment" />
+                    <input asp-for="TotalPayment" class="form-control" required placeholder="Enter Total Payment" type="number" step="0.01" min="0" />
                     <span asp-validation-for="TotalPayment" class="text-danger"></span>
                 </div>
-
-                <div class="form-group">
-                    <label asp-for="Advance" class="control-label">Advance</label><span style="color: red;">*</span>
-                    <input asp-for="Advance" class="form-control" required placeholder="Enter Advance Payment" />
+                <!-- Advance -->
+                <div class="form-group col-md-6 mb-2">
+                    <label asp-for="Advance" class="control-label">Advance Payment</label><span style="color: red;">*</span>
+                    <input asp-for="Advance" class="form-control" required placeholder="Enter Advance Payment" type="number" step="0.01" min="0" />
                     <span asp-validation-for="Advance" class="text-danger"></span>
                 </div>
+            </div>
 
-                <div class="form-group text-center">
-                    <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color: dodgerblue">Update</button>
-                    <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;">Cancel</button>
-                </div>
+            <div class="form-group text-center mt-3">
+                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color: dodgerblue">Update</button>
+                <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;">Cancel</button>
             </div>
         </form>
 
@@ -99,7 +151,7 @@
                 }
             });
         } else {
-            form.reportValidity(); // Triggers built-in validation messages
+            form.reportValidity();
         }
     });
 

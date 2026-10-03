@@ -147,57 +147,67 @@ namespace AshtavinayakAPP.Controllers
         // GET: Bookings/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var booking = await _context.Bookings.FindAsync(id);
-            if (booking == null)
-            {
-                return NotFound();
-            }
-            ViewData["PickupPointId"] = new SelectList(_context.PickupPoints, "PickupPointId", "PickupPoint1");
-            ViewData["TripId"] = new SelectList(_context.Trips.Where(x => !x.IsDeleted), "TripId", "TourName");
-            ViewData["UserId"] = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName");
+            if (booking == null) return NotFound();
+
+            // Load linked BookingSeat for adults/children/seat numbers
+            var seat = await _context.BookingSeats
+                .Where(s => s.BookingId == id && !s.IsDeleted)
+                .FirstOrDefaultAsync();
+
+            ViewBag.SeatAdults          = seat?.Adults ?? 0;
+            ViewBag.SeatChildwithseat   = seat?.Childwithseat ?? 0;
+            ViewBag.SeatChildwithoutseat = seat?.Childwithoutseat ?? 0;
+            ViewBag.SeatNumbers         = seat?.SeatNumber ?? "";
+
+            ViewData["PickupPointId"] = new SelectList(_context.PickupPoints, "PickupPointId", "PickupPoint1", booking.PickupPointId);
+            ViewData["TripId"]        = new SelectList(_context.Trips.Where(x => !x.IsDeleted), "TripId", "TourName", booking.TripId);
+            ViewData["UserId"]        = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName", booking.UserId);
             return View(booking);
         }
 
         // POST: Bookings/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("BookingId,UserId,TripId,PickupPointId,BookingDate,Status,TotalPayment,Advance,BookingCode,Droppoint")] Booking booking)
+        public async Task<IActionResult> Edit(int id,
+            [Bind("BookingId,UserId,TripId,PickupPointId,BookingDate,Status,TotalPayment,Advance,BookingCode,Droppoint,RoomType,IsDeleted")] Booking booking,
+            int? SeatAdults, int? SeatChildwithseat, int? SeatChildwithoutseat, string? SeatNumbers)
         {
-            if (id != booking.BookingId)
-            {
-                return NotFound();
-            }
+            if (id != booking.BookingId) return NotFound();
 
             if (ModelState.IsValid)
             {
                 try
                 {
                     _context.Update(booking);
+
+                    // Update linked BookingSeat record if exists
+                    var seat = await _context.BookingSeats
+                        .Where(s => s.BookingId == id && !s.IsDeleted)
+                        .FirstOrDefaultAsync();
+                    if (seat != null)
+                    {
+                        seat.Adults              = SeatAdults;
+                        seat.Childwithseat       = SeatChildwithseat;
+                        seat.Childwithoutseat    = SeatChildwithoutseat;
+                        seat.SeatNumber          = SeatNumbers;
+                        _context.Update(seat);
+                    }
+
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!BookingExists(booking.BookingId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    if (!BookingExists(booking.BookingId)) return NotFound();
+                    throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["PickupPointId"] = new SelectList(_context.PickupPoints, "PickupPointId", "PickupPoint1");
-            ViewData["TripId"] = new SelectList(_context.Trips.Where(x => !x.IsDeleted), "TripId", "TourName");
-            ViewData["UserId"] = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName");
+            ViewData["PickupPointId"] = new SelectList(_context.PickupPoints, "PickupPointId", "PickupPoint1", booking.PickupPointId);
+            ViewData["TripId"]        = new SelectList(_context.Trips.Where(x => !x.IsDeleted), "TripId", "TourName", booking.TripId);
+            ViewData["UserId"]        = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName", booking.UserId);
             return View(booking);
         }
 

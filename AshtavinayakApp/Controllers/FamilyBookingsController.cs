@@ -127,30 +127,22 @@ namespace AshtavinayakAPP.Controllers
         // GET: FamilyBookings/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var familyBooking = await _context.FamilyBookings.FindAsync(id);
-            if (familyBooking == null)
-            {
-                return NotFound();
-            }
+            if (familyBooking == null) return NotFound();
+
+            ViewData["UserId"]    = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName", familyBooking.UserId);
+            ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName", familyBooking.PackageId);
             return View(familyBooking);
         }
 
         // POST: FamilyBookings/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("FamilyId,CarType,Date,Time,BookingId,UserId")] FamilyBooking familyBooking)
+        public async Task<IActionResult> Edit(int id, [Bind("FamilyId,CarType,Date,Time,BookingId,UserId,PackageId,BookingDate,Adults,Childwithseat,Childwithoutseat,PickupPoint,TotalPayment,Advance,IsDeleted")] FamilyBooking familyBooking)
         {
-            if (id != familyBooking.FamilyId)
-            {
-                return NotFound();
-            }
+            if (id != familyBooking.FamilyId) return NotFound();
 
             if (ModelState.IsValid)
             {
@@ -159,21 +151,20 @@ namespace AshtavinayakAPP.Controllers
                     _context.Update(familyBooking);
                     await _context.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
                 {
-                    if (!FamilyBookingExists(familyBooking.FamilyId))
-                    {
+                    if (!_context.FamilyBookings.Any(e => e.FamilyId == familyBooking.FamilyId))
                         return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["UserId"]    = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName", familyBooking.UserId);
+            ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName", familyBooking.PackageId);
             return View(familyBooking);
         }
+
+
 
         // GET: FamilyBookings/Delete/5
         public async Task<IActionResult> Delete(int? id)

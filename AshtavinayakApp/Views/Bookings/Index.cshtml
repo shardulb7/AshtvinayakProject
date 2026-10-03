@@ -62,9 +62,9 @@
                 <th>Phone</th>
                 <th>Pickup Point</th>
                 <th>Drop Point</th>
-                <th>Adults</th>
-                <th>Child w/Seat</th>
-                <th>Child w/o Seat</th>
+                <th>Extra adult (If any)</th>
+                <th>Extra kid (With seat- if any)</th>
+                <th>Extra kid (Without seat- if any)</th>
                 <th>Seat No</th>
                 <th>Room Type</th>
                 <th>Total Payment</th>
@@ -134,7 +134,7 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'landscape' });
         doc.text('Bus Booking List', 14, 10);
-        const headers = [["Sr", "Booking Date", "Trip Date", "Trip Name", "User", "Phone", "Pickup", "Drop", "Adults", "CwS", "CwoS", "Seat No", "Room", "Total", "Advance"]];
+        const headers = [["Sr", "Booking Date", "Trip Date", "Trip Name", "User", "Phone", "Pickup", "Drop", "Extra adult (If any)", "CwS", "CwoS", "Seat No", "Room", "Total", "Advance"]];
         const rows = [];
         document.querySelectorAll("#bookingTable tbody tr").forEach(function(row) {
             if (row.style.display !== "none") {
