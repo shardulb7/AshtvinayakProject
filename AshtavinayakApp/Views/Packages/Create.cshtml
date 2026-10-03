@@ -175,6 +175,19 @@
         document.getElementById('carFields').style.display = isCar ? '' : 'none';
         document.getElementById('busFields').style.display = isCar ? 'none' : '';
         document.getElementById('sharingChargesSection').style.display = isCar ? 'none' : '';
+
+        // Disable inputs in the hidden section so they are NOT submitted with the form.
+        // Without this, both busFields and carFields submit the same field names,
+        // and the busFields (empty) value overrides the carFields (filled) value.
+        document.querySelectorAll('#busFields input, #busFields select, #busFields textarea').forEach(function(el) {
+            el.disabled = isCar;
+        });
+        document.querySelectorAll('#carFields input, #carFields select, #carFields textarea').forEach(function(el) {
+            el.disabled = !isCar;
+        });
+        document.querySelectorAll('#sharingChargesSection input, #sharingChargesSection select').forEach(function(el) {
+            el.disabled = isCar;
+        });
     }
 
     $(document).ready(function () {
