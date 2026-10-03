@@ -256,6 +256,18 @@ public partial class AshtvinayakTravelContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("BookingDate");
 
+            entity.Property(e => e.PickupPoint)
+                .HasMaxLength(500)
+                .HasColumnName("PickupPoint");
+
+            entity.Property(e => e.TotalPayment)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("TotalPayment");
+
+            entity.Property(e => e.Advance)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("Advance");
+
             entity.HasOne(d => d.Package).WithMany(p => p.FamilyBookings)
                 .HasForeignKey(d => d.PackageId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

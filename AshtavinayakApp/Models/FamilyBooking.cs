@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace AshtavinayakAPP.Models;
@@ -25,6 +25,12 @@ public partial class FamilyBooking
     public int? Childwithseat { get; set; }
     public int? Childwithoutseat { get; set; }
     public DateTime? BookingDate { get; set; }
+
+    public string? PickupPoint { get; set; }
+
+    public decimal? TotalPayment { get; set; }
+
+    public decimal? Advance { get; set; }
 
     public virtual Package Package { get; set; } = null!;
     public virtual User User { get; set; }

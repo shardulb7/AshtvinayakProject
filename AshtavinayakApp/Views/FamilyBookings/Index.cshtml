@@ -1,11 +1,7 @@
 @model IEnumerable<AshtavinayakAPP.Models.FamilyBooking>
-@using System.Collections.Generic
 
 @{
     ViewData["Title"] = "Car Booking List";
-    var pickupPoints  = (ViewBag.PickupPoints  as Dictionary<int, string>)   ?? new Dictionary<int, string>();
-    var totalPayments = (ViewBag.TotalPayments as Dictionary<int, decimal?>) ?? new Dictionary<int, decimal?>();
-    var advances      = (ViewBag.Advances      as Dictionary<int, decimal?>) ?? new Dictionary<int, decimal?>();
 }
 
 <link href="~/CSS/Category/index.css" rel="stylesheet" />
@@ -58,10 +54,8 @@
             }
             @foreach (var item in Model)
             {
-                int bid = item.BookingId;
-                string pickup   = pickupPoints.ContainsKey(bid)  ? pickupPoints[bid]  : "-";
-                string totalPay = totalPayments.ContainsKey(bid) && totalPayments[bid].HasValue ? "Rs." + totalPayments[bid]!.Value.ToString("N0") : "-";
-                string adv      = advances.ContainsKey(bid)      && advances[bid].HasValue      ? "Rs." + advances[bid]!.Value.ToString("N0")      : "-";
+                string totalPay = item.TotalPayment.HasValue ? "Rs." + item.TotalPayment.Value.ToString("N0") : "-";
+                string adv      = item.Advance.HasValue      ? "Rs." + item.Advance.Value.ToString("N0")      : "-";
                 <tr>
                     <td>@serialNumber</td>
                     <td>@(item.BookingDate.HasValue ? item.BookingDate.Value.ToString("dd-MM-yyyy") : "NA")</td>
@@ -71,7 +65,7 @@
                     <td>@item.CarType</td>
                     <td>@(item.User != null ? item.User.UserName : "-")</td>
                     <td>@(item.User != null ? item.User.PhoneNumber : "-")</td>
-                    <td>@pickup</td>
+                    <td>@(item.PickupPoint ?? "-")</td>
                     <td>@(item.Adults ?? 0)</td>
                     <td>@(item.Childwithseat ?? 0)</td>
                     <td>@(item.Childwithoutseat ?? 0)</td>

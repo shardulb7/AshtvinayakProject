@@ -54,16 +54,6 @@ namespace AshtavinayakAPP.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
-            // Load linked Booking records for pickup point, payment info
-            var bookingIds = familyBookings.Select(f => f.BookingId).Distinct().ToList();
-            var linkedBookings = await _context.Bookings
-                .Where(b => bookingIds.Contains(b.BookingId))
-                .ToListAsync();
-
-            ViewBag.PickupPoints  = linkedBookings.ToDictionary(b => b.BookingId, b => b.PickUpPointName ?? "—");
-            ViewBag.TotalPayments = linkedBookings.ToDictionary(b => b.BookingId, b => b.TotalPayment);
-            ViewBag.Advances      = linkedBookings.ToDictionary(b => b.BookingId, b => b.Advance);
-
             ViewData["TotalPages"]  = totalPages;
             ViewData["CurrentPage"] = page;
 
@@ -92,7 +82,10 @@ namespace AshtavinayakAPP.Controllers
         // GET: FamilyBookings/Create
         public IActionResult Create()
         {
-            ViewData["UserId"] = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName");
+            ViewData["UserId"]    = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName");
+            ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName");
+            ViewBag.UserPhones    = _context.Users.Where(x => !x.IsDeleted)
+                .ToDictionary(u => u.UserId, u => u.PhoneNumber ?? "");
             return View();
         }
 
@@ -101,7 +94,7 @@ namespace AshtavinayakAPP.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("FamilyId,CarType,Date,Time,BookingId,UserId")] FamilyBooking familyBooking)
+        public async Task<IActionResult> Create([Bind("FamilyId,CarType,Date,Time,BookingId,UserId,PackageId,BookingDate,Adults,Childwithseat,Childwithoutseat,PickupPoint,TotalPayment,Advance")] FamilyBooking familyBooking)
         {
             if (ModelState.IsValid)
             {
@@ -109,9 +102,9 @@ namespace AshtavinayakAPP.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-
-            ViewData["UserId"] = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName");
-
+            ViewData["UserId"]    = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName");
+            ViewData["PackageId"] = new SelectList(_context.Packages.Where(x => !x.IsDeleted), "PackageId", "PackageName");
+            ViewBag.UserPhones    = _context.Users.Where(x => !x.IsDeleted).ToDictionary(u => u.UserId, u => u.PhoneNumber ?? "");
             return View(familyBooking);
         }
 

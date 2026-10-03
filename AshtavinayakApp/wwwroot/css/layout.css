@@ -163,7 +163,7 @@ a {
 ============================== */
 .sidebar-nav {
     flex: 1 1 auto;
-    overflow-y: auto;
+    overflow-y: scroll;
     scrollbar-width: thin;
     scrollbar-color: #D44206 #fce6e6;
     padding: 0;

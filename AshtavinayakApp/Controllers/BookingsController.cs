@@ -94,8 +94,11 @@ namespace AshtavinayakAPP.Controllers
         public IActionResult Create()
         {
             ViewData["PickupPointId"] = new SelectList(_context.PickupPoints, "PickupPointId", "PickupPoint1");
-            ViewData["TripId"] = new SelectList(_context.Trips.Where(x => !x.IsDeleted), "TripId", "TourName");
-            ViewData["UserId"] = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName");
+            ViewData["TripId"]        = new SelectList(_context.Trips.Where(x => !x.IsDeleted), "TripId", "TourName");
+            ViewData["UserId"]        = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName");
+            // Phone lookup for auto-fill
+            ViewBag.UserPhones = _context.Users.Where(x => !x.IsDeleted)
+                .ToDictionary(u => u.UserId, u => u.PhoneNumber ?? "");
             return View();
         }
 
@@ -104,17 +107,40 @@ namespace AshtavinayakAPP.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("BookingId,UserId,TripId,PickupPointId,BookingDate,Status,TotalPayment,Advance,BookingCode,Droppoint")] Booking booking)
+        public async Task<IActionResult> Create(
+            [Bind("BookingId,UserId,TripId,PickupPointId,BookingDate,Status,TotalPayment,Advance,BookingCode,Droppoint,RoomType")] Booking booking,
+            [FromForm] int? adults,
+            [FromForm] int? childWithSeat,
+            [FromForm] int? childWithoutSeat,
+            [FromForm] string? seatNumber)
         {
             if (ModelState.IsValid)
             {
+                // Save the booking first to get BookingId
                 _context.Add(booking);
                 await _context.SaveChangesAsync();
+
+                // Create linked BookingSeat with adults/children/seat number
+                var seat = new BookingSeat
+                {
+                    BookingId        = booking.BookingId,
+                    TripId           = booking.TripId,
+                    UserId           = booking.UserId,
+                    Adults           = adults,
+                    Childwithseat    = childWithSeat,
+                    Childwithoutseat = childWithoutSeat,
+                    SeatNumber       = seatNumber,
+                    IsDeleted        = false
+                };
+                _context.BookingSeats.Add(seat);
+                await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["PickupPointId"] = new SelectList(_context.PickupPoints.Where(x=>!x.IsDeleted), "PickupPointId", "PickupPoint1");
-            ViewData["TripId"] = new SelectList(_context.Trips.Where(x => !x.IsDeleted), "TripId", "TourName");
-            ViewData["UserId"] = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName");
+            ViewData["PickupPointId"] = new SelectList(_context.PickupPoints.Where(x => !x.IsDeleted), "PickupPointId", "PickupPoint1");
+            ViewData["TripId"]        = new SelectList(_context.Trips.Where(x => !x.IsDeleted), "TripId", "TourName");
+            ViewData["UserId"]        = new SelectList(_context.Users.Where(x => !x.IsDeleted), "UserId", "UserName");
+            ViewBag.UserPhones        = _context.Users.Where(x => !x.IsDeleted).ToDictionary(u => u.UserId, u => u.PhoneNumber ?? "");
             return View(booking);
         }
 

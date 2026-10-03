@@ -1,84 +1,149 @@
-﻿@model AshtavinayakAPP.Models.FamilyBooking
+@model AshtavinayakAPP.Models.FamilyBooking
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Add Car Booking";
 }
 
 <link href="~/css/familyBooking/create.css" rel="stylesheet" />
-<!-- SweetAlert CSS -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="d-flex justify-content-center align-items-center">
-    <div class="shadow-lg p-4 bg-white rounded" style="width: 50%;">
+    <div class="shadow-lg p-4 bg-white rounded" style="width: 60%;">
 
         <div class="col-sm-12 col-md-12 col-lg-12 d-flex justify-content-between align-items-center">
-            <h4>Add Family Booking</h4>
-            <a asp-action="Index" class="close-btn" title="Back to List">❌</a>
+            <h4>Add Car Booking</h4>
+            <a asp-action="Index" class="close-btn" title="Back to List">✕</a>
         </div>
-
         <hr />
 
         <form id="familyBookingForm" asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-            <div class="form-group mb-2">
-                <label asp-for="CarType" class="control-label">Car Type</label><span style="color: red;">*</span>
-                <input asp-for="CarType" class="form-control" required placeholder="Enter Car Type" />
-                <span asp-validation-for="CarType" class="text-danger"></span>
+            <div class="row">
+                <!-- User -->
+                <div class="form-group col-md-6 mb-2">
+                    <label asp-for="UserId" class="control-label">User Name<span style="color:red;">*</span></label>
+                    <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId" required id="userSelect">
+                        <option value="" disabled selected>Select User</option>
+                    </select>
+                </div>
+                <!-- Phone (auto-filled) -->
+                <div class="form-group col-md-6 mb-2">
+                    <label class="control-label">Phone Number</label>
+                    <input type="text" id="phoneDisplay" class="form-control" readonly placeholder="Auto-filled on user select" />
+                </div>
             </div>
 
-            <div class="form-group mb-2">
-                <label asp-for="Date" class="control-label">Date</label><span style="color: red;">*</span>
-                <input asp-for="Date" class="form-control" required placeholder="Enter Date" type="date"/>
-                <span asp-validation-for="Date" class="text-danger"></span>
+            <div class="row">
+                <!-- Package / Trip Name -->
+                <div class="form-group col-md-6 mb-2">
+                    <label asp-for="PackageId" class="control-label">Trip (Tour) Name<span style="color:red;">*</span></label>
+                    <select asp-for="PackageId" class="form-control" asp-items="ViewBag.PackageId" required>
+                        <option value="" disabled selected>Select Package</option>
+                    </select>
+                </div>
+                <!-- Car Type -->
+                <div class="form-group col-md-6 mb-2">
+                    <label asp-for="CarType" class="control-label">Car Type<span style="color:red;">*</span></label>
+                    <input asp-for="CarType" class="form-control" required placeholder="Enter Car Type" />
+                </div>
             </div>
 
-            <div class="form-group mb-2">
-                <label asp-for="Time" class="control-label">Time</label><span style="color: red;">*</span>
-                <input asp-for="Time" class="form-control" required placeholder="Enter Time" type="time"/>
-                <span asp-validation-for="Time" class="text-danger"></span>
+            <div class="row">
+                <!-- Booking Date -->
+                <div class="form-group col-md-4 mb-2">
+                    <label asp-for="BookingDate" class="control-label">Booking Date</label>
+                    <input asp-for="BookingDate" class="form-control" type="date" />
+                </div>
+                <!-- Trip Date -->
+                <div class="form-group col-md-4 mb-2">
+                    <label asp-for="Date" class="control-label">Trip Date<span style="color:red;">*</span></label>
+                    <input asp-for="Date" class="form-control" type="date" required />
+                </div>
+                <!-- Pickup Time -->
+                <div class="form-group col-md-4 mb-2">
+                    <label asp-for="Time" class="control-label">Pickup Time<span style="color:red;">*</span></label>
+                    <input asp-for="Time" class="form-control" type="time" required />
+                </div>
             </div>
 
-            <div class="form-group mb-2">
-                <label asp-for="BookingId" class="control-label">Booking ID</label><span style="color: red;">*</span>
-                <input asp-for="BookingId" class="form-control" required placeholder="Enter Booking ID" />
-                <span asp-validation-for="BookingId" class="text-danger"></span>
+            <div class="row">
+                <!-- Pickup Point -->
+                <div class="form-group col-md-12 mb-2">
+                    <label asp-for="PickupPoint" class="control-label">Pickup Point</label>
+                    <input asp-for="PickupPoint" class="form-control" placeholder="Enter Pickup Point" />
+                </div>
             </div>
 
-            <div class="form-group mb-2">
-                <label asp-for="UserId" class="control-label">User ID</label><span style="color: red;">*</span>
-                <input asp-for="UserId" class="form-control" required placeholder="Enter User ID" />
-                <span asp-validation-for="UserId" class="text-danger"></span>
+            <div class="row">
+                <!-- Adults -->
+                <div class="form-group col-md-4 mb-2">
+                    <label asp-for="Adults" class="control-label">Adults</label>
+                    <input asp-for="Adults" class="form-control" type="number" min="0" value="0" placeholder="0" />
+                </div>
+                <!-- Child with Seat -->
+                <div class="form-group col-md-4 mb-2">
+                    <label asp-for="Childwithseat" class="control-label">Child with Seat</label>
+                    <input asp-for="Childwithseat" class="form-control" type="number" min="0" value="0" placeholder="0" />
+                </div>
+                <!-- Child without Seat -->
+                <div class="form-group col-md-4 mb-2">
+                    <label asp-for="Childwithoutseat" class="control-label">Child w/o Seat</label>
+                    <input asp-for="Childwithoutseat" class="form-control" type="number" min="0" value="0" placeholder="0" />
+                </div>
             </div>
 
-            <div class="form-group text-center">
-                <button type="button" id="submitButton" class="btn btn-secondaryN" style="background-color:dodgerblue">Create</button>
-                <button type="button" id="cancelButton" class="btn btn-secondaryN" style="background-color:red;">Cancel</button>
+            <div class="row">
+                <!-- Total Payment -->
+                <div class="form-group col-md-6 mb-2">
+                    <label asp-for="TotalPayment" class="control-label">Total Payment</label>
+                    <input asp-for="TotalPayment" class="form-control" type="number" step="0.01" placeholder="Enter Total Payment" />
+                </div>
+                <!-- Advance -->
+                <div class="form-group col-md-6 mb-2">
+                    <label asp-for="Advance" class="control-label">Advance Payment</label>
+                    <input asp-for="Advance" class="form-control" type="number" step="0.01" placeholder="Enter Advance Payment" />
+                </div>
+            </div>
+
+            <!-- Hidden BookingId = 0 (not used for car bookings) -->
+            <input type="hidden" name="BookingId" value="0" />
+
+            <div class="form-group text-center mt-3">
+                <button type="button" id="submitButton" class="btn" style="background-color:dodgerblue; color:white;">Create</button>
+                <button type="button" id="cancelButton" class="btn" style="background-color:red; color:white;">Cancel</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    // SweetAlert for Submit Button
-    document.getElementById('submitButton').addEventListener('click', function (e) {
-        Swal.fire({
-            title: "Are you sure?",
-            text: "Do you want to add this family booking?",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Yes, Add it!"
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('familyBookingForm').submit(); // Submit the form if confirmed
-            }
-        });
+    var userPhones = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UserPhones as Dictionary<int, string> ?? new Dictionary<int, string>()));
+
+    document.getElementById('userSelect').addEventListener('change', function() {
+        document.getElementById('phoneDisplay').value = userPhones[this.value] || '';
     });
 
-    // SweetAlert for Cancel Button
-    document.getElementById('cancelButton').addEventListener('click', function (e) {
+    document.getElementById('submitButton').addEventListener('click', function () {
+        var form = document.getElementById('familyBookingForm');
+        if (form.checkValidity()) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to add this car booking?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, Add it!"
+            }).then(function(result) {
+                if (result.isConfirmed) { form.submit(); }
+            });
+        } else {
+            form.reportValidity();
+        }
+    });
+
+    document.getElementById('cancelButton').addEventListener('click', function () {
         Swal.fire({
             title: "Are you sure?",
             text: "Your changes will be lost!",
@@ -87,16 +152,14 @@
             confirmButtonColor: "#3085d6",
             cancelButtonColor: "#d33",
             confirmButtonText: "Yes, Cancel!"
-        }).then((result) => {
+        }).then(function(result) {
             if (result.isConfirmed) {
-                window.location.href = '@Url.Action("Index", "FamilyBookings")'; // Redirect if confirmed
+                window.location.href = '@Url.Action("Index", "FamilyBookings")';
             }
         });
     });
 </script>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }
