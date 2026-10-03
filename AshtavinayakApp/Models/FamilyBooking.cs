@@ -32,6 +32,6 @@ public partial class FamilyBooking
 
     public decimal? Advance { get; set; }
 
-    public virtual Package Package { get; set; } = null!;
-    public virtual User User { get; set; }
+    public virtual Package? Package { get; set; }
+    public virtual User? User { get; set; }
 }
