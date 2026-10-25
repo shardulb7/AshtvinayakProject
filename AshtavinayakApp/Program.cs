@@ -415,6 +415,24 @@ var schemaSqls = new[]
          ALTER TABLE [dbo].[Packages] ADD [DestinationId] INT NULL;
      END;
      """),
+    ("Add PickupPoint to FamilyBooking (car pickup text)",
+     """
+     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='FamilyBooking' AND COLUMN_NAME='PickupPoint')
+         ALTER TABLE [dbo].[FamilyBooking] ADD [PickupPoint] NVARCHAR(500) NULL;
+     """),
+    ("Add TotalPayment to FamilyBooking",
+     """
+     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='FamilyBooking' AND COLUMN_NAME='TotalPayment')
+         ALTER TABLE [dbo].[FamilyBooking] ADD [TotalPayment] DECIMAL(18,2) NULL;
+     """),
+    ("Add Advance to FamilyBooking",
+     """
+     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME='FamilyBooking' AND COLUMN_NAME='Advance')
+         ALTER TABLE [dbo].[FamilyBooking] ADD [Advance] DECIMAL(18,2) NULL;
+     """),
 };
 
 try
